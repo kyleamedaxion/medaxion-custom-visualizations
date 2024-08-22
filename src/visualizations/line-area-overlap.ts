@@ -137,6 +137,30 @@ const vis: LineAreaOverlapViz = {
       ],
       section: "Style",
     },
+    rangeColor1: {
+      type: "array",
+      label: "First Hour Range Color",
+      display: "color",
+      section: "Colors",
+    },
+    overUnderColor1: {
+      type: "array",
+      label: "First Hour Over/Under Color",
+      display: "color",
+      section: "Colors",
+    },
+    rangeColor2: {
+      type: "array",
+      label: "Second Hour Range Color",
+      display: "color",
+      section: "Colors",
+    },
+    overUnderColor2: {
+      type: "array",
+      label: "Second Hour Over/Under Color",
+      display: "color",
+      section: "Colors",
+    },
 
   },
   // Set up the initial state of the visualization
@@ -209,37 +233,37 @@ const vis: LineAreaOverlapViz = {
       });
     } else { this.clearErrors && this.clearErrors('configError'); }
 
-    // For each measure with the _type of range, add four configurations for the before and after outer and over-under colors
-    rangeMeasures.forEach((measure, i) => {
-      updatedOptions[`${measure}_range_color_1`] = {
-        section: "Colors",
-        type: "array",
-        label: `${measures1.find((m) => m.name === measure)?.label} First Hour Range Color`,
-        display: "color",
-        order: 5 * i + 1,
-      };
-      updatedOptions[`${measure}_over_under_color_1`] = {
-        section: "Colors",
-        type: "array",
-        label: `${measures1.find((m) => m.name === measure)?.label} First Hour Over/Under Color`,
-        display: "color",
-        order: 5 * i + 2,
-      };
-      updatedOptions[`${measure}_range_color_2`] = {
-        section: "Colors",
-        type: "array",
-        label: `${measures1.find((m) => m.name === measure)?.label} Second Hour Range Color`,
-        display: "color",
-        order: 5 * i + 1,
-      };
-      updatedOptions[`${measure}_over_under_color_2`] = {
-        section: "Colors",
-        type: "array",
-        label: `${measures1.find((m) => m.name === measure)?.label} Second Hour Over/Under Color`,
-        display: "color",
-        order: 5 * i + 2,
-      };
-    })
+    // // For each measure with the _type of range, add four configurations for the before and after outer and over-under colors
+    // rangeMeasures.forEach((measure, i) => {
+    //   updatedOptions[`${measure}_range_color_1`] = {
+    //     section: "Colors",
+    //     type: "array",
+    //     label: `${measures1.find((m) => m.name === measure)?.label} First Hour Range Color`,
+    //     display: "color",
+    //     order: 5 * i + 1,
+    //   };
+    //   updatedOptions[`${measure}_over_under_color_1`] = {
+    //     section: "Colors",
+    //     type: "array",
+    //     label: `${measures1.find((m) => m.name === measure)?.label} First Hour Over/Under Color`,
+    //     display: "color",
+    //     order: 5 * i + 2,
+    //   };
+    //   updatedOptions[`${measure}_range_color_2`] = {
+    //     section: "Colors",
+    //     type: "array",
+    //     label: `${measures1.find((m) => m.name === measure)?.label} Second Hour Range Color`,
+    //     display: "color",
+    //     order: 5 * i + 1,
+    //   };
+    //   updatedOptions[`${measure}_over_under_color_2`] = {
+    //     section: "Colors",
+    //     type: "array",
+    //     label: `${measures1.find((m) => m.name === measure)?.label} Second Hour Over/Under Color`,
+    //     display: "color",
+    //     order: 5 * i + 2,
+    //   };
+    // })
 
 
     // const optionsArray: VisOption[] = Object.values(updatedOptions);
@@ -321,7 +345,7 @@ const vis: LineAreaOverlapViz = {
     // This comes from the first row of data
     const rangeMeasuresData = measures1.filter((measure) => config[`${measure.name}_type`] === "range");
     // Range data for the first highlighted hour
-    let rangeData = rangeMeasuresData.map((measure) => {
+    let rangeData = rangeMeasuresData.map((measure, rangeDataIndex) => {
       const startTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value), 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf();
       const endTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + 1), 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf();
 
@@ -342,14 +366,15 @@ const vis: LineAreaOverlapViz = {
       dataPoints = [...startInterpolatedPoints, ...dataPoints, ...endInterpolatedPoints];
       return {
         name: measure.name + " hr1",
-        color: config[`${measure.name}_range_color_1`][0],
-        overUnderColor: config[`${measure.name}_over_under_color_1`][0],
+        color: config.rangeColor1[0],
+        overUnderColor: config.overUnderColor1[0],
         value: startTimestamp,
-        data: dataPoints
+        data: dataPoints,
+        showInLegend: rangeDataIndex === 0 ? true : false
       };
     })
     // Range data for the second highlighted hour
-    rangeData = rangeData.concat(rangeMeasuresData.map((measure) => {
+    rangeData = rangeData.concat(rangeMeasuresData.map((measure,rangeDataIndex) => {
       const startTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + 1), 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf();
       const endTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + 2), 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf();
 
@@ -373,10 +398,11 @@ const vis: LineAreaOverlapViz = {
 
       return {
         name: measure.name + " hr2",
-        color: config[`${measure.name}_range_color_2`][0],
-        overUnderColor: config[`${measure.name}_over_under_color_2`][0],
+        color: config.rangeColor2[0],
+        overUnderColor: config.overUnderColor2[0],
         value: startTimestamp,
-        data: dataPoints
+        data: dataPoints,
+        showInLegend: rangeDataIndex === 0 ? true : false
       };
     }));
 
@@ -496,6 +522,7 @@ const vis: LineAreaOverlapViz = {
           zIndex: 0,
           marker: { enabled: false },
           dataLabels: { enabled: false },
+          showInLegend: range.showInLegend
         }
         return newRange;
       }),
