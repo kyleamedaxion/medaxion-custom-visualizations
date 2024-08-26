@@ -7,6 +7,7 @@ import {
 import * as Highcharts from 'highcharts';
 import more from 'highcharts/highcharts-more';
 import moment from 'moment-timezone';
+import { start } from "repl";
 
 more(Highcharts);
 
@@ -17,6 +18,18 @@ declare var LookerCharts: {
     htmlForCell: (cell: any) => string;
   };
 };
+
+const detectDateTimeFormat = (datetimeString: string): string => {
+  const colonCount = (datetimeString.match(/:/g) || []).length;
+  if (colonCount === 2) {
+    return 'YYYY-MM-DD HH:mm:ss';
+  } else if (colonCount === 1) {
+    return 'YYYY-MM-DD HH:mm';
+  } else {
+    return 'YYYY-MM-DD HH';
+  }
+};
+
 interface LineAreaOverlapViz extends VisualizationDefinition {
   elementRef?: HTMLDivElement;
 }
@@ -137,27 +150,50 @@ const vis: LineAreaOverlapViz = {
       ],
       section: "Style",
     },
+    actualsCurveType: {
+      type: "string",
+      label: "Actuals Curve Type",
+      display: "select",
+      values: [
+        { "Step": "step" },
+        { "Linear": "linear" },
+      ],
+      section: "Style",
+    },
     rangeColor1: {
       type: "array",
       label: "First Hour Range Color",
       display: "color",
       section: "Colors",
     },
-    overUnderColor1: {
+    overColor1: {
       type: "array",
-      label: "First Hour Over/Under Color",
+      label: "First Hour Over Color",
       display: "color",
       section: "Colors",
     },
+    underColor1: {
+      type: "array",
+      label: "First Hour Under Color",
+      display: "color",
+      section: "Colors",
+    },
+
     rangeColor2: {
       type: "array",
       label: "Second Hour Range Color",
       display: "color",
       section: "Colors",
     },
-    overUnderColor2: {
+    overColor2: {
       type: "array",
-      label: "Second Hour Over/Under Color",
+      label: "Second Hour Over Color",
+      display: "color",
+      section: "Colors",
+    },
+    underColor2: {
+      type: "array",
+      label: "Second Hour Under Color",
       display: "color",
       section: "Colors",
     },
@@ -233,40 +269,6 @@ const vis: LineAreaOverlapViz = {
       });
     } else { this.clearErrors && this.clearErrors('configError'); }
 
-    // // For each measure with the _type of range, add four configurations for the before and after outer and over-under colors
-    // rangeMeasures.forEach((measure, i) => {
-    //   updatedOptions[`${measure}_range_color_1`] = {
-    //     section: "Colors",
-    //     type: "array",
-    //     label: `${measures1.find((m) => m.name === measure)?.label} First Hour Range Color`,
-    //     display: "color",
-    //     order: 5 * i + 1,
-    //   };
-    //   updatedOptions[`${measure}_over_under_color_1`] = {
-    //     section: "Colors",
-    //     type: "array",
-    //     label: `${measures1.find((m) => m.name === measure)?.label} First Hour Over/Under Color`,
-    //     display: "color",
-    //     order: 5 * i + 2,
-    //   };
-    //   updatedOptions[`${measure}_range_color_2`] = {
-    //     section: "Colors",
-    //     type: "array",
-    //     label: `${measures1.find((m) => m.name === measure)?.label} Second Hour Range Color`,
-    //     display: "color",
-    //     order: 5 * i + 1,
-    //   };
-    //   updatedOptions[`${measure}_over_under_color_2`] = {
-    //     section: "Colors",
-    //     type: "array",
-    //     label: `${measures1.find((m) => m.name === measure)?.label} Second Hour Over/Under Color`,
-    //     display: "color",
-    //     order: 5 * i + 2,
-    //   };
-    // })
-
-
-    // const optionsArray: VisOption[] = Object.values(updatedOptions);
     // @ts-ignore
     this.trigger && this.trigger("registerOptions", updatedOptions);
 
@@ -289,124 +291,185 @@ const vis: LineAreaOverlapViz = {
     const actualMeasure = measures1.find((measure) => config[`${measure.name}_type`] === "actual")?.name || '';
     const dimension = timeSeries[0].name
 
+
+    // Detect the date-time format from the first row of data
+    const detectedFormat = detectDateTimeFormat(data[0][dimension].value);
+    console.log("detectedFormat", detectedFormat);
     const getHour = (datetimeString: string): number => {
       if (typeof datetimeString !== 'string') {
         console.error("datetimeString is not a string", datetimeString);
         return 0;
       }
-      return moment.tz(datetimeString, 'YYYY-MM-DD HH:mm:ss', 'GMT').hour();
+      return moment.tz(datetimeString, detectedFormat, 'GMT').hour();
     }
 
     const getDatePart = (datetimeString: string): string => {
-      return moment.tz(datetimeString, 'YYYY-MM-DD HH:mm:ss', 'GMT').format('YYYY-MM-DD');
+      return moment.tz(datetimeString, detectedFormat, 'GMT').format('YYYY-MM-DD');
     }
 
     const getTimestampFromHour = (datePart: string, hour: number): string => {
-      return moment.tz(`${datePart} ${hour.toString().padStart(2, '0')}:00:00`, 'YYYY-MM-DD HH:mm:ss', 'GMT').format('YYYY-MM-DD HH:mm:ss');
+      return moment.tz(`${datePart} ${hour.toString().padStart(2, '0')}:00:00`, 'YYYY-MM-DD HH:mm:ss', 'GMT').format(detectedFormat);
     }
 
     // Extract the date part from the first row of data
     // This is necessary to properly assign the 'hour' shift changes as a datatime
     const datePart = getDatePart(data[0][dimension].value);
 
+    const addInterpolatedPoints = (
+      data: any[],
+      dimension: string,
+      actualMeasure: string,
+      coverageMeasure: string,
+      startTimestamp: number,
+      endTimestamp: number
+    ) => {
+      let overDataPoints: any[] = [];
+      let underDataPoints: any[] = [];
 
-    const interpolate = (x: number, x0: number, y0: number, x1: number, y1: number): number => {
-      return y0 + ((x - x0) * (y1 - y0)) / (x1 - x0);
-    };
-
-    const addInterpolatedPoints = (transitionPoint: number) => {
-      // Find the two nearest points
-      let before = null;
-      let after = null;
       for (let i = 0; i < data.length - 1; i++) {
-        console.log("data[i]", data[i]);
-        console.log('ts1', data[i][dimension].value, transitionPoint)
-        if (moment.tz(data[i][dimension]?.value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf() <= transitionPoint && 
-        moment.tz(data[i+1][dimension]?.value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf() >= transitionPoint) {
-          before = data[i];
-          after = data[i + 1];
-          break;
+        const currentPoint = data[i];
+        const nextPoint = data[i + 1];
+
+        const currentTime = moment.tz(currentPoint[dimension].value, detectedFormat, 'GMT').valueOf();
+        const nextTime = moment.tz(nextPoint[dimension].value, detectedFormat, 'GMT').valueOf();
+        const currentActual = currentPoint[actualMeasure]?.value;
+        const currentCoverage = currentPoint[coverageMeasure]?.value;
+        const nextActual = nextPoint[actualMeasure]?.value;
+        const nextCoverage = nextPoint[coverageMeasure]?.value;
+        if (currentTime > startTimestamp && nextTime < endTimestamp) {
+
+
+          const isCrossing = (currentActual > currentCoverage && nextActual < nextCoverage) || (currentActual < currentCoverage && nextActual > nextCoverage);
+          if (isCrossing) {
+            // Add the crossing point to the overDataPoints and underDataPoints
+            //switch the y values if the curve type is step 
+            if (config.actualsCurveType === 'step') {
+              if (currentActual > currentCoverage) {
+                overDataPoints.push([currentTime, currentCoverage, currentActual]);
+                underDataPoints.push([currentTime, currentCoverage, currentCoverage]);
+              } else {
+                overDataPoints.push([currentTime, currentCoverage, currentCoverage]);
+                underDataPoints.push([currentTime, currentCoverage, currentActual]);
+              }
+            } else {
+              const crossingTime = currentTime + (((nextTime - currentTime) * (currentCoverage - currentActual)) / (nextActual - currentActual));
+              overDataPoints.push([crossingTime, currentCoverage, currentCoverage]);
+              underDataPoints.push([crossingTime, currentCoverage, currentCoverage]);
+            }
+          }
+        }
+        // add in interpolated points for the start of the series
+        if (currentTime < startTimestamp && nextTime > startTimestamp) {
+          // The time is the startTimestamp
+          // The value is the interpolated value between the current and next point
+          const crossingTime = startTimestamp;
+          const crossingValue = currentActual + (((nextActual - currentActual) * (crossingTime - currentTime)) / (nextTime - currentTime));
+          if (crossingValue >= nextCoverage) {
+            overDataPoints.push([startTimestamp, nextCoverage, crossingValue]);
+
+          } else {
+            underDataPoints.push([startTimestamp, nextCoverage, crossingValue]);
+          }
+        }
+        // // add in interpolated points for the end of the series
+        if (currentTime < endTimestamp && nextTime > endTimestamp) {
+          // The time is the endTimestamp
+          // The value is the interpolated value between the current and next point
+          const crossingTime = endTimestamp;
+          const crossingValue = currentActual + (((nextActual - currentActual) * (crossingTime - currentTime)) / (nextTime - currentTime));
+          if (config.actualsCurveType === 'step') {
+            if (crossingValue >= nextCoverage) {
+              overDataPoints.push([endTimestamp, nextCoverage, nextActual]);
+            } else {
+              underDataPoints.push([endTimestamp, nextCoverage, nextActual]);
+            }
+          } else if (crossingValue >= nextCoverage) {
+            overDataPoints.push([endTimestamp, nextCoverage, crossingValue]);
+          } else {
+            underDataPoints.push([endTimestamp, nextCoverage, crossingValue]);
+          }
         }
       }
 
-      if (before && after) {
-        const interpolatedCoverage = interpolate(transitionPoint, 
-          moment.tz(before[dimension].value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf(), before[coverageMeasure].value, 
-          moment.tz(after[dimension].value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf(), after[coverageMeasure].value);
-        const interpolatedActual = interpolate(transitionPoint, 
-          moment.tz(before[dimension].value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf(), before[actualMeasure].value, 
-          moment.tz(after[dimension].value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf(), after[actualMeasure].value
-        );
-        return [[transitionPoint, interpolatedCoverage, interpolatedActual]];
-      }
-      return [];
+
+      console.log("overDataPoints", overDataPoints);
+      console.log("underDataPoints", underDataPoints);
+      return { interpolatedOverDataPoints: overDataPoints, interpolatedUnderDataPoints: underDataPoints };
     };
     // Create an array of range measures with color and value
     // This comes from the first row of data
     const rangeMeasuresData = measures1.filter((measure) => config[`${measure.name}_type`] === "range");
     // Range data for the first highlighted hour
-    let rangeData = rangeMeasuresData.map((measure, rangeDataIndex) => {
-      const startTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value), 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf();
-      const endTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + 1), 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf();
 
-      let dataPoints = data.map((row, rowIndex) => {
-        const hour = getHour(row[dimension].value);
-        const isInRange = hour === moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value), 'YYYY-MM-DD HH:mm:ss', 'GMT').hours();
-        if (isInRange) {
-          return [moment.tz(row[dimension]?.value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf(), row[coverageMeasure].value, row[actualMeasure].value];
-        } else {
-          return null;
-        }
-      }).filter((point) => point !== null);
+    const rangeData: any[] = [];
 
-      // Add interpolated points at the start and end of the range
-      const startInterpolatedPoints = addInterpolatedPoints(startTimestamp);
-      const endInterpolatedPoints = addInterpolatedPoints(endTimestamp);
+    rangeMeasuresData.forEach((measure, rangeDataIndex) => {
+      const calculateDataPoints = (hourOffset: number) => {
+        const startTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + hourOffset), detectedFormat, 'GMT').valueOf();
+        const endTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + hourOffset + 1), detectedFormat, 'GMT').valueOf();
 
-      dataPoints = [...startInterpolatedPoints, ...dataPoints, ...endInterpolatedPoints];
-      return {
-        name: measure.name + " hr1",
+        const overDataPoints = data.map((row) => {
+          const timestamp = moment.tz(row[dimension].value, detectedFormat, 'GMT').valueOf();
+          const isInRange = timestamp >= startTimestamp && timestamp <= endTimestamp;
+          // const timestampDiffs = [startTimestamp, endTimestamp, timestamp].map(t => moment(t).format('YYYY-MM-DD HH:mm:ss'));
+          // console.log('timestampDiffs', timestampDiffs, isInRange);
+          if (isInRange && row[coverageMeasure].value <= row[actualMeasure].value) {
+            return [timestamp, row[coverageMeasure].value, row[actualMeasure].value];
+          } else {
+            return null;
+          }
+        }).filter((point) => point !== null);
+
+        const underDataPoints = data.map((row) => {
+          const timestamp = moment.tz(row[dimension].value, detectedFormat, 'GMT').valueOf();
+          const isInRange = timestamp >= startTimestamp && timestamp <= endTimestamp;
+          if (isInRange && row[coverageMeasure].value > row[actualMeasure].value) {
+            return [timestamp, row[coverageMeasure].value, row[actualMeasure].value];
+          } else {
+            return null;
+          }
+        }).filter((point) => point !== null);
+
+        const { interpolatedOverDataPoints, interpolatedUnderDataPoints } = addInterpolatedPoints(data, dimension, actualMeasure, coverageMeasure, startTimestamp, endTimestamp);
+        const combinedOverDataPoints = [...overDataPoints, ...interpolatedOverDataPoints].sort((a, b) => a[0] - b[0]);
+        const combinedUnderDataPoints = [...underDataPoints, ...interpolatedUnderDataPoints].sort((a, b) => a[0] - b[0]);
+
+        return {
+          startTimestamp,
+          endTimestamp,
+          overDataPoints: combinedOverDataPoints,
+          underDataPoints: combinedUnderDataPoints,
+        };
+      };
+
+      const firstHourData = calculateDataPoints(0);
+      const secondHourData = calculateDataPoints(1);
+
+      rangeData.push({
+        name: "First Hour",
         color: config.rangeColor1[0],
-        overUnderColor: config.overUnderColor1[0],
-        value: startTimestamp,
-        data: dataPoints,
-        showInLegend: rangeDataIndex === 0 ? true : false
-      };
-    })
-    // Range data for the second highlighted hour
-    rangeData = rangeData.concat(rangeMeasuresData.map((measure,rangeDataIndex) => {
-      const startTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + 1), 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf();
-      const endTimestamp = moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + 2), 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf();
+        underColor: config.underColor1[0],
+        overColor: config.overColor1[0],
+        value: firstHourData.startTimestamp,
+        overData: firstHourData.overDataPoints,
+        underData: firstHourData.underDataPoints,
+        showInLegend: rangeDataIndex === 0 ? true : false,
+      });
 
-      let dataPoints = data.map((row, rowIndex) => {
-        const hour = getHour(row[dimension].value);
-        const isInRange = hour === moment.tz(getTimestampFromHour(datePart, data[0][measure.name].value + 1), 'YYYY-MM-DD HH:mm:ss', 'GMT').hours();
-        if (isInRange) {
-          return [moment.tz(row[dimension]?.value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf(), row[coverageMeasure].value, row[actualMeasure].value];
-        } else {
-          return null;
-        }
-      }).filter((point) => point !== null);
-
-      // Add interpolated points at the start and end of the range
-      const startInterpolatedPoints = addInterpolatedPoints(startTimestamp);
-      const endInterpolatedPoints = addInterpolatedPoints(endTimestamp);
-
-      console.log("startInterpolatedPoints", startInterpolatedPoints);
-      console.log("endInterpolatedPoints", endInterpolatedPoints);
-      dataPoints = [...startInterpolatedPoints, ...dataPoints, ...endInterpolatedPoints];
-
-      return {
-        name: measure.name + " hr2",
+      rangeData.push({
+        name: "Second Hour",
         color: config.rangeColor2[0],
-        overUnderColor: config.overUnderColor2[0],
-        value: startTimestamp,
-        data: dataPoints,
-        showInLegend: rangeDataIndex === 0 ? true : false
-      };
-    }));
+        underColor: config.underColor2[0],
+        overColor: config.overColor2[0],
+        value: secondHourData.startTimestamp,
+        overData: secondHourData.overDataPoints,
+        underData: secondHourData.underDataPoints,
+        showInLegend: rangeDataIndex === 0 ? true : false,
+      });
 
+    });
 
+    console.log("rangeData", rangeData);
     // Retrieve the marker type configurations
     const actualMarkerType = config.actualMarkerType;
     const coverageMarkerType = config.coverageMarkerType;
@@ -483,7 +546,7 @@ const vis: LineAreaOverlapViz = {
         // Pull from the first measure with the _type of coverage
         data: data.map((row) => {
           return {
-            x: moment.tz(row[dimension]?.value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf(),
+            x: moment.tz(row[dimension]?.value, detectedFormat, 'GMT').valueOf(),
             y: row[coverageMeasure]?.value
           }
         }),
@@ -497,7 +560,7 @@ const vis: LineAreaOverlapViz = {
         name: 'Avg. Actual',
         data: data.map((row) => {
           return {
-            x: moment.tz(row[dimension]?.value, 'YYYY-MM-DD HH:mm:ss', 'GMT').valueOf(),
+            x: moment.tz(row[dimension]?.value, detectedFormat, 'GMT').valueOf(),
             y: row[actualMeasure]?.value
           }
         }),
@@ -514,11 +577,26 @@ const vis: LineAreaOverlapViz = {
       ...rangeData.map((range) => {
         const newRange: Highcharts.SeriesOptionsType = {
 
-          name: range.name,
+          name: `${range.name} Over`,
           type: 'arearange',
-          data: range.data,
+          color: range.overColor,
+          data: range.overData,
           fillOpacity: 1,
-          color: range.overUnderColor,
+          zIndex: 0,
+          marker: { enabled: false },
+          dataLabels: { enabled: false },
+          showInLegend: range.showInLegend
+        }
+        return newRange;
+      }),
+      ...rangeData.map((range) => {
+        const newRange: Highcharts.SeriesOptionsType = {
+
+          name: `${range.name} Under`,
+          type: 'arearange',
+          color: range.underColor,
+          data: range.underData,
+          fillOpacity: 1,
           zIndex: 0,
           marker: { enabled: false },
           dataLabels: { enabled: false },
@@ -529,7 +607,18 @@ const vis: LineAreaOverlapViz = {
 
       ]
     }
-
+    if (config.actualsCurveType === 'step' && options.series && options.series[1]) {
+      options.series.forEach(series => {
+        // @ts-ignore
+        series.step = 'right';
+      });
+    }
+    if (config.actualsCurveType === 'step' && options.series && (detectedFormat === 'YYYY-MM-DD HH:mm' || detectedFormat === 'YYYY-MM-DD HH')) {
+      options.series.forEach((series,i) => {
+        // @ts-ignore
+        if (i>1) series.step = 'left';
+      });
+    }
 
 
     Highcharts.chart(element, options);
