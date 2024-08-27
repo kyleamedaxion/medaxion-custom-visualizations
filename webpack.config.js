@@ -4,6 +4,7 @@ let webpackConfig = {
   mode: "development",
   entry: {
     lineAreaOverlap: "./src/visualizations/line-area-overlap.ts",
+    gantt: "./src/visualizations/gantt.ts",
   },
   output: {
     filename: "[name].js",

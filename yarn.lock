@@ -2246,6 +2246,11 @@ hasown@^2.0.0, hasown@^2.0.2:
   dependencies:
     function-bind "^1.1.2"
 
+highcharts-gantt@^11.4.7:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/highcharts-gantt/-/highcharts-gantt-0.1.7.tgz#8267f08b1480d3841989d4d96cd2321fb0b6898d"
+  integrity sha512-xzmMhrN82ZVUvmLinxf9TlADCD4fiEBbMuA+swok4x2Hn/ffGy2IWqpysYQhlW6xM5rLLIOB9/XeOFY+FM2vGQ==
+
 highcharts-more-node@^5.0.13:
   version "5.0.13"
   resolved "https://registry.yarnpkg.com/highcharts-more-node/-/highcharts-more-node-5.0.13.tgz#736e89cd5228ac9f32fb90924a4765bfc4072694"
@@ -2258,9 +2263,9 @@ highcharts-more@^0.1.7:
   resolved "https://registry.npmjs.org/highcharts-more/-/highcharts-more-0.1.7.tgz"
   integrity sha512-3qK/gr5ZIJ/XJ+SeeazSlPttpsC5HWVN+bhYYDg+erZGJ3Kc1SFzoaZqozkrfNIccRoGlm1UQMouChHT3TG0jQ==
 
-highcharts@^11.4.6:
+highcharts@^11.4.7:
   version "11.4.7"
-  resolved "https://registry.npmjs.org/highcharts/-/highcharts-11.4.7.tgz"
+  resolved "https://registry.yarnpkg.com/highcharts/-/highcharts-11.4.7.tgz#ac6cf5aa325b8bc6880288dd401711876372fb3f"
   integrity sha512-4FQTaV/9DtYal6U8rCgGeFWzzoL5QoKowpzyGlG0sp+UJKjm9G9t4bvyz+odvXt+YcqUvK9GEspdLoBnKSWGVA==
 
 highcharts@^5.0.12:

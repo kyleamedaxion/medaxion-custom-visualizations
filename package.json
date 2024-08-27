@@ -26,7 +26,7 @@
     "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
-    "highcharts": "^11.4.6",
+    "highcharts": "^11.4.7",
     "highcharts-more": "^0.1.7",
     "highcharts-more-node": "^5.0.13",
     "moment-timezone": "^0.5.45"
