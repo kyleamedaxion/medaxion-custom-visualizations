@@ -295,14 +295,7 @@ const vis: LineAreaOverlapViz = {
     // Detect the date-time format from the first row of data
     const detectedFormat = detectDateTimeFormat(data[0][dimension].value);
     console.log("detectedFormat", detectedFormat);
-    const getHour = (datetimeString: string): number => {
-      if (typeof datetimeString !== 'string') {
-        console.error("datetimeString is not a string", datetimeString);
-        return 0;
-      }
-      return moment.tz(datetimeString, detectedFormat, 'GMT').hour();
-    }
-
+   
     const getDatePart = (datetimeString: string): string => {
       return moment.tz(datetimeString, detectedFormat, 'GMT').format('YYYY-MM-DD');
     }
