@@ -20,7 +20,6 @@ const vis: GanttViz = {
   id: "gantt-chart",
   label: "Gantt Chart",
   options: {
-
     chartTitle: {
       type: "string",
       label: "Chart Title",

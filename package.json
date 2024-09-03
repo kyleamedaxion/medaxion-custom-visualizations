@@ -26,6 +26,8 @@
     "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
+    "d3": "^7.9.0",
     "highcharts": "^11.4.7",
     "highcharts-more": "^0.1.7",
     "highcharts-more-node": "^5.0.13",

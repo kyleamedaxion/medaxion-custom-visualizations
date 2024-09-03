@@ -5,6 +5,7 @@ let webpackConfig = {
   entry: {
     lineAreaOverlap: "./src/visualizations/line-area-overlap.ts",
     gantt: "./src/visualizations/gantt.ts",
+    ganttD3: "./src/visualizations/gantt-d3.ts",
   },
   output: {
     filename: "[name].js",
