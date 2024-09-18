@@ -37,7 +37,7 @@ export interface VisualizationDefinition {
     element: HTMLElement,
     config: VisConfig,
     queryResponse: VisQueryResponse,
-    details?: VisUpdateDetails
+    details?: VisUpdateDetails,
   ) => void;
   updateAsync?: (
     data: VisData,
@@ -45,7 +45,7 @@ export interface VisualizationDefinition {
     config: VisConfig,
     queryResponse: VisQueryResponse,
     details: VisUpdateDetails | undefined,
-    updateComplete: () => void
+    doneRendering: () => void
   ) => void;
   destroy?: () => void;
 }

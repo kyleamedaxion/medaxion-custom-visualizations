@@ -2,11 +2,25 @@ import { arrayBuffer } from "stream/consumers";
 
 export const ganttOptions = {
 
+    titleColumn: {
+        type: "string",
+        label: "Title Column",
+        display: "select",
+        values: [],
+        section: "Style",
+    },
     chartTitle: {
         type: "string",
         label: "Chart Title",
         display: "text",
         section: "Style",
+    },
+    titleSize: {
+        type: "string",
+        label: "Title Size",
+        display: "text",
+        section: "Style",
+        default: "20",
     },
     alternateRowColor: {
         type: "array",
@@ -103,5 +117,12 @@ export const ganttOptions = {
         display: "select",
         values: [],
         section: "Data",
+    },
+    legendFontSize: {
+        type: "string",
+        label: "Legend Font Size",
+        display: "text",
+        section: "Style",
+        default: "12",
     },
 }
