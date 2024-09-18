@@ -139,14 +139,14 @@ export const vis: FloatingColumnViz = {
     d3.select(element).selectAll("*").remove();
 
     // Set up SVG container
-    const margin = { top: 20, right: 20, bottom: 40, left: 40 };
+    const margin = { top: 20, right: 20, bottom: 50, left: 40 };
     const width = element.clientWidth - margin.left - margin.right;
     const height = element.clientHeight - margin.top - margin.bottom;
 
     const svg = d3.select(element)
       .append("svg")
       .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom + 30)
+      .attr("height", height + margin.top + margin.bottom )
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -309,7 +309,7 @@ export const vis: FloatingColumnViz = {
 
     // Center the legend group
     const legendX = (width - totalLegendWidth) / 2;
-    legend.attr("transform", `translate(${legendX}, ${height + margin.bottom})`);
+    legend.attr("transform", `translate(${legendX}, ${height + margin.bottom -10})`);
   },
 };
 
