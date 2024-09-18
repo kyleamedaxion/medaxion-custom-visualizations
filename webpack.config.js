@@ -4,8 +4,8 @@ let webpackConfig = {
   mode: "development",
   entry: {
     lineAreaOverlap: "./src/visualizations/line-area-overlap.ts",
-    gantt: "./src/visualizations/gantt.ts",
     ganttD3: "./src/visualizations/gantt-d3.ts",
+    floatingBars: "./src/visualizations/floating-bars.ts",
   },
   output: {
     filename: "[name].js",
@@ -31,7 +31,6 @@ let webpackConfig = {
     ],
   },
   devServer: {
-    static: path.join(__dirname, 'dist'),
     compress: true,
     port: 9000,
     server: {
