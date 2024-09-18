@@ -105,6 +105,13 @@ export const vis: FloatingColumnViz = {
       default: "",
       section: "Legend",
     },
+    legendFontSize: {
+      type: "string",
+      label: "Legend Font Size",
+      display: "text",
+      default: "12",
+      section: "Legend",
+    },
   },
   create(element, config) {
     element.className = "d3-floating-column-chart";
@@ -272,7 +279,7 @@ export const vis: FloatingColumnViz = {
     // Append rectangles and text to legend items
     legendItemGroups.append("rect")
       .attr("x", 0)
-      .attr("y", -10)
+      .attr("y", -7)
       .attr("width", 10)
       .attr("height", 10)
       .attr("fill", d => d.color);
@@ -282,6 +289,8 @@ export const vis: FloatingColumnViz = {
       .attr("y", 0)
       .attr("text-anchor", "start")
       .attr("alignment-baseline", "middle")
+      // add font size
+      .style("font-size", config.legendFontSize + "px")
       .attr("fill", d => d.color)
       .text(d => d.name);
 
