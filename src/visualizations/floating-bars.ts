@@ -155,6 +155,9 @@ export const vis: FloatingColumnViz = {
     const lowValues = data.map(d => d[lowMeasure].value);
     const highValues = data.map(d => d[highMeasure].value);
 
+    // Start the y-axis at the minimum low value minus 15% of the range
+    const yAxisMin = d3.min(lowValues) as number - 0.15*(d3.max(highValues) as number - d3.min(lowValues) as number);
+
     // Create scales
     const x = d3.scaleBand()
       .domain(categories)
@@ -162,9 +165,13 @@ export const vis: FloatingColumnViz = {
       .padding(0.1);
 
     const y = d3.scaleLinear()
-      .domain([0, d3.max(highValues) as number])
+      .domain([yAxisMin, d3.max(highValues) as number])
       .nice()
       .range([height, 0]);
+    // const y = d3.scaleLinear()
+    //   .domain([0, d3.max(highValues) as number])
+    //   .nice()
+    //   .range([height, 0]);
 
     // Add axes
     svg.append("g")
@@ -184,7 +191,7 @@ export const vis: FloatingColumnViz = {
       .attr("x", d => x(d[queryResponse.fields.dimension_like[0].name].value) as number)
       .attr("y", d => y(d[highMeasure].value))
       .attr("width", x.bandwidth())
-      .attr("height", d => y(d[lowMeasure].value) - y(d[highMeasure].value))
+      .attr("height", d => Math.max(0,y(d[lowMeasure].value) - y(d[highMeasure].value)))
       .attr("fill", config.barColor);
 
     // Draw reference lines inside each column for the average value

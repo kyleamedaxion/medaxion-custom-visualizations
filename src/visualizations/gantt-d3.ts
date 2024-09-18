@@ -17,7 +17,7 @@ type LegendItem = {
 };
 
 
-const vis: GanttViz = {
+export const vis: GanttViz = {
   id: "gantt-chart",
   label: "Gantt Chart",
   // @ts-ignore
@@ -32,29 +32,39 @@ const vis: GanttViz = {
   `;
     document.head.appendChild(style);
   },
-  update(data, element, config, queryResponse) {
-    handleErrors(this, queryResponse, {
-      min_pivots: 0,
-      max_pivots: 0,
-      min_dimensions: 1,
-      max_dimensions: 10,
-      min_measures: 0,
-      max_measures: 1,
-    });
+  updateAsync(data, element, config, queryResponse, details, done) {
+
+    // const isOK: boolean = handleErrors(this, queryResponse, {
+    //   min_pivots: 0,
+    //   max_pivots: 0,
+    //   min_dimensions: 10,
+    //   max_dimensions: 10,
+    //   min_measures: 0,
+    //   max_measures: 0,
+    // });
+    // if (!isOK) {
+    //   done()
+    //   return;
+    // }
 
     const { dimension_like: dimensions } = queryResponse.fields;
 
     // Populate the select options for dimensions
     const dimensionOptions = dimensions.map(dim => ({ [dim.label]: dim.name }));
 
-    const optionsToSet = ['nameDim', 'startDim', 'endDim', 'ref1BandStart', 'ref1BandEnd', 'ref2BandStart', 'ref2BandEnd', 'colorCategory'];
+    const optionsToSet = ['nameDim', 'startDim', 'endDim', 'ref1BandStart', 'ref1BandEnd', 'ref2BandStart', 'ref2BandEnd', 'colorCategory', 'titleColumn'];
 
     optionsToSet.forEach(option => {
       this.options[option].values = dimensionOptions;
     });
 
+      console.log('optins to set', optionsToSet)
+      console.log('all options',this.options)
     const colorCategory = config.colorCategory;
-    if (!colorCategory) return
+    if (!colorCategory) {
+      // @ts-ignore
+      this.trigger && this.trigger("registerOptions", this.options);
+      return}
     console.log('colorCategory', colorCategory);
     const colorCategoryValues = data.map(row => row[colorCategory].value).filter((value, index, self) => self.indexOf(value) === index);
     colorCategoryValues.forEach((value, index) => {
@@ -89,6 +99,9 @@ const vis: GanttViz = {
     const refBand1End = config.ref1BandEnd || dimensions[4].name;
     const refBand2Start = config.ref2BandStart || dimensions[5].name;
     const refBand2End = config.ref2BandEnd || dimensions[6].name;
+    const titleColumn = config.titleColumn || dimensions[0].name;
+    const title = data[0][titleColumn].value || config.chartTitle || "Gantt Chart";
+    const legendFontSize = config.legendFontSize || 12;
 
     const getColor = (category: string) => {
       return config[`colorFor${category}`] || 'black';
@@ -135,8 +148,30 @@ const vis: GanttViz = {
     // Clear previous SVG
     d3.select(element).selectAll("*").remove();
 
+    // Calculate left margin width based on axis values
+    const longestLabel = categories.reduce((a, b) => a.length > b.length ? a : b, '');
+    const tempSvg = d3.select('body').append('svg');
+    const tempText = tempSvg.append('text')
+      .attr('class', 'temp-text')
+      .style('font-family', "'Source Sans Pro', sans-serif")
+      .style('font-size', '14px')
+      .text(longestLabel);
+    const labelWidth = tempText.node()?.getBBox().width || 0;
+    tempSvg.remove();
+
+    // Calculate the top margin based on the title size
+    const tempTitleSvg = d3.select('body').append('svg');
+    const tempTitleText = tempTitleSvg.append('text')
+      .attr('class', 'temp-text')
+      .style('font-family', "'Source Sans Pro', sans-serif")
+      .style('font-size', `${config.titleSize || 20}px`)
+      .text(title);
+    const titleHeight = tempTitleText.node()?.getBBox().height || 0;
+    tempTitleSvg.remove();
+
     // Set up SVG container
-    const margin = { top: 20, right: 20, bottom: 80, left: 100 };
+    const margin = { top: titleHeight + 10, right: 10, bottom: 38, left: labelWidth + 10 }; // Add some padding to the label width
+    // const margin = { top: 34, right: 10, bottom: 38, left: labelWidth + 10 }; // Add some padding to the label width
     const width = element.clientWidth - margin.left - margin.right;
     const height = element.clientHeight - margin.top - margin.bottom;
 
@@ -146,6 +181,14 @@ const vis: GanttViz = {
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", -margin.top / 2)
+      .attr("text-anchor", "middle")
+      .style("font-size", `${config.titleSize || 20}px`)
+      .style("font-family", "'Source Sans Pro', sans-serif")
+      .text(title);
 
     const defs = svg.append("defs");
 
@@ -250,18 +293,18 @@ const vis: GanttViz = {
       .attr("height", height)
       .attr("fill", config.refBand2Color || "rgba(68, 170, 213, 0.1)");
 
-// Add background rectangles for alternating rows
-categories.forEach((category, index) => {
-  if (index % 2 === 1) {
-    svg.append("rect")
-      .attr("x", 0)
-      .attr("y", y(category) ?? 0)
-      .attr("width", width)
-      .attr("height", y.bandwidth())
-      .attr("fill", config.alternateRowColor || "#f0f0f0") // Use the color from config or a default color
-      .attr("opacity", 0.1); // Adjust opacity as needed
-  }
-});
+    // Add background rectangles for alternating rows
+    categories.forEach((category, index) => {
+      if (index % 2 === 1) {
+        svg.append("rect")
+          .attr("x", 0)
+          .attr("y", y(category) ?? 0)
+          .attr("width", width)
+          .attr("height", y.bandwidth())
+          .attr("fill", config.alternateRowColor || "#f0f0f0") // Use the color from config or a default color
+          .attr("opacity", 0.1); // Adjust opacity as needed
+      }
+    });
 
     // Draw bars
     svg.selectAll(".bar")
@@ -340,13 +383,33 @@ categories.forEach((category, index) => {
           .style("opacity", 0);
       });
 
+    svg.selectAll(".bar-pattern")
+      .on("mouseover", function (event, d: any) {
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", .9);
+        tooltip.html(`
+          <b>${config.yAxisCategories}: ${d[nameDim].value}</b><br/>
+          <b>Category:</b> <span style="color: ${getColor(d[colorCategory].value)};">${d[colorCategory].value}</span><br/>
+          <b>Start:</b> ${d[startDim].value}<br/>
+          <b>End:</b> ${d[endDim].value}<br/>
+          <b>Duration:</b> ${Math.floor((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) / 3600000)} hours ${Math.floor(((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) % 3600000) / 60000)} minutes
+        `)
+          .style("left", (event.pageX + 5) + "px")
+          .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mouseout", function (d) {
+        tooltip.transition()
+          .duration(500)
+          .style("opacity", 0);
+      });
 
     // Add legend
     const legend = svg.append("g")
       .attr("class", "legend")
       .attr("transform", `translate(0, ${height + 20})`)
       .style("font-family", "'Source Sans Pro', sans-serif") // Add font-family
-      .style("font-size", "14px"); // Add font-size
+      .style("font-size", legendFontSize); // Add font-size
 
     // Add range colors to legend
     const rangeColors = [
@@ -369,7 +432,8 @@ categories.forEach((category, index) => {
       const text = legendItem.append("text")
         .attr("x", 30)
         .attr("y", 15)
-        .text(range.label);
+        .text(range.label)      
+        .style("font-size", legendFontSize);
 
       const textWidth = text?.node()?.getBBox()?.width ?? 120;
 
@@ -407,8 +471,9 @@ categories.forEach((category, index) => {
       const text = legendItem.append("text")
         .attr("x", 30)
         .attr("y", 15)
-        .text(value)
-        .style("font-family", "'Source Sans Pro', sans-serif"); // Add font-family;
+        .text(value)      
+        .style("font-size", legendFontSize)
+        .style("font-family", "'Source Sans Pro', sans-serif"); 
 
       // Adjust spacing based on text width
       const textWidth = text?.node()?.getBBox()?.width ?? 120;
@@ -427,7 +492,11 @@ categories.forEach((category, index) => {
       item.element.attr("transform", `translate(${currentX}, 0)`);
       currentX += item.width;
     });
+    done()
   },
+
 };
 
 looker.plugins.visualizations.add(vis);
+
+export default vis;

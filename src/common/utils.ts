@@ -42,8 +42,7 @@ export const handleErrors = (
       vis.addError({
         title: `Not Enough ${noun}s`,
         message: `This visualization requires ${min === max ? "exactly" : "at least"
-          } ${min} ${noun.toLowerCase()}${min === 1 ? "" : "s"}.`,
-        group,
+          } ${min} ${noun.toLowerCase()}${min === 1 ? "" : "s"}.`
       });
       return false;
     }
@@ -51,12 +50,11 @@ export const handleErrors = (
       vis.addError({
         title: `Too Many ${noun}s`,
         message: `This visualization requires ${min === max ? "exactly" : "no more than"
-          } ${max} ${noun.toLowerCase()}${min === 1 ? "" : "s"}.`,
-        group,
+          } ${max} ${noun.toLowerCase()}${min === 1 ? "" : "s"}.`
       });
       return false;
     }
-    vis.clearErrors(group);
+    vis.clearErrors();
     return true;
   };
 
