@@ -1,4 +1,4 @@
-# Custom Table Visualization
+# Custom Table and Bell Chart Visualizations
 
 ## Installation:
 
@@ -27,6 +27,7 @@ visualization: {
 
 Copy the file generated during the build, `dist/custom_table.js`, to the Looker project.
 
+Repeat for the bell chart, if desired.
 
 Looker custom visualization ref:
 - https://github.com/looker/custom_visualizations_v2/blob/master/docs/getting_started.md
