@@ -12,17 +12,17 @@ let webpackConfig = {
     path: path.join(__dirname, "dist"),
   },
   resolve: {
-    extensions: [".ts", ".js", ".scss", ".css"],
+    extensions: [".ts", ".js", ".scss", ".css",  ".jsx"],
   },
   module: {
     rules: [
       {
-        test: /\.js$/,
+        test: /\.js|jsx$/,
         exclude: /node_modules\/(?!highcharts|highcharts-more)/,
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env'],
+            presets: ['@babel/preset-env', '@babel/preset-react'],
           },
         },
       },

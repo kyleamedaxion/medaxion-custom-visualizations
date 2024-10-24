@@ -3,7 +3,7 @@ const path = require("path");
 module.exports = {
   mode: "production",
   entry: {
-    table: "./src/customVis.js",
+    // table: "./src/customVis.js",
     bell: "./src/bell.js",
   },
   output: {

@@ -56,12 +56,6 @@ const vis: LineAreaOverlapViz = {
       display: "color",
       section: "Colors",
     },
-    chartTitle: {
-      type: "string",
-      label: "Chart Title",
-      display: "text",
-      section: "Style",
-    },
     actualMarkerType: {
       type: "string",
       label: "Actual Point Type",
@@ -150,16 +144,6 @@ const vis: LineAreaOverlapViz = {
       ],
       section: "Style",
     },
-    actualsCurveType: {
-      type: "string",
-      label: "Actuals Curve Type",
-      display: "select",
-      values: [
-        { "Step": "step" },
-        { "Linear": "linear" },
-      ],
-      section: "Style",
-    },
     rangeColor1: {
       type: "array",
       label: "First Hour Range Color",
@@ -197,7 +181,89 @@ const vis: LineAreaOverlapViz = {
       display: "color",
       section: "Colors",
     },
-
+    coverageLabel: {
+      type: "string",
+      label: "Coverage Label",
+      display: "text",
+      section: "Labels",
+    },
+    actualLabel: {
+      type: "string",
+      label: "Actual Label",
+      display: "text",
+      section: "Labels",
+    },
+    firstRangeOverLabel: {
+      type: "string",
+      label: "First Hour Over Label",
+      display: "text",
+      section: "Labels",
+    },
+    firstRangeUnderLabel: {
+      type: "string",
+      label: "First Hour Under Label",
+      display: "text",
+      section: "Labels",
+    },
+    secondRangeOverLabel: {
+      type: "string",
+      label: "Second Hour Over Label",
+      display: "text",
+      section: "Labels",
+    },
+    secondRangeUnderLabel: {
+      type: "string",
+      label: "Second Hour Under Label",
+      display: "text",
+      section: "Labels",
+    },
+    chartTitle: {
+      type: "string",
+      label: "Chart Title",
+      display: "text",
+      section: "Labels",
+    },
+    showTitle: {
+      type: "string",
+      label: "Show Title",
+      display: "select",
+      values: [
+        { "Yes": "yes" },
+        { "No": "no" },
+      ],
+      section: "Labels",
+    },
+    axisFontSize: {
+      type: "string",
+      label: "Axis Font Size",
+      display: "text",
+      default: "12px",
+      section: "Labels",
+    },
+    legendFontSize: {
+      type: "string",
+      label: "Legend Font Size",
+      display: "text",
+      default: "12px",
+      section: "Labels",
+    },
+    tooltipFontSize: {
+      type: "string",
+      label: "Tooltip Font Size",
+      display: "text",
+      default: "12px",
+      section: "Labels",
+    },
+    hideYAxis: {
+      type: "string",
+      label: "Hide Y Axis",
+      display: "select",
+      values: [
+        { "Yes": "yes" },
+        { "No": "no" },
+      ],
+      section: "Style",
+    },
   },
   // Set up the initial state of the visualization
   create(element, config) {
@@ -323,100 +389,81 @@ const vis: LineAreaOverlapViz = {
       let overDataPoints: any[] = [];
       let underDataPoints: any[] = [];
 
-      for (let i = 0; i < sortedData.length - 1; i++) {
+      for (let i = 1; i < sortedData.length; i++) {
         const currentPoint = sortedData[i];
-        const nextPoint = sortedData[i + 1];
-
+        const previousPoint = sortedData[i - 1];
+    
         const currentTime = moment.tz(currentPoint[dimension].value, detectedFormat, 'GMT').valueOf();
-        const nextTime = moment.tz(nextPoint[dimension].value, detectedFormat, 'GMT').valueOf();
+        const previousTime = moment.tz(previousPoint[dimension].value, detectedFormat, 'GMT').valueOf();
         const currentActual = currentPoint[actualMeasure]?.value;
         const currentCoverage = currentPoint[coverageMeasure]?.value;
-        const nextActual = nextPoint[actualMeasure]?.value;
-        const nextCoverage = nextPoint[coverageMeasure]?.value;
-        if (currentTime >= startTimestamp && nextTime <= endTimestamp) {
-
-
-          const isCrossing = (currentActual >= currentCoverage && nextActual < nextCoverage) || (currentActual <= currentCoverage && nextActual > nextCoverage);
-          if (isCrossing) {
-            console.log("crossing currentPoint, nextPoint, currentCoverage, nextCoverage", currentPoint, nextPoint, currentCoverage, nextCoverage);
-            // Add the crossing point to the overDataPoints and underDataPoints
-            //switch the y values if the curve type is step 
-            if (config.actualsCurveType === 'step') {
-              if (currentActual > currentCoverage) {
-                overDataPoints.push([currentTime, currentCoverage, currentActual]);
-                underDataPoints.push([currentTime, currentCoverage, currentCoverage]);
-              } else {
-                overDataPoints.push([currentTime, currentCoverage, currentCoverage]);
-                underDataPoints.push([currentTime, currentCoverage, currentActual]);
-              }
-            } else {
-              const crossingTime = currentTime + (((nextTime - currentTime) * (nextCoverage - currentActual)) / ((nextCoverage - currentActual)+(nextActual - nextCoverage)));
-              console.log("crossingTime", crossingTime);
-              // human readable crossing time
-              console.log("crossingTime", moment(crossingTime).utc().format('YYYY-MM-DD HH:mm:ss'));
-              overDataPoints.push([crossingTime, nextCoverage, nextCoverage]);
-              underDataPoints.push([crossingTime, nextCoverage, nextCoverage]);
-            }
-          }
-        }
-        // add in interpolated points for the start of the series
-        if (currentTime < startTimestamp && nextTime > startTimestamp) {
-          // The time is the startTimestamp
-          // The value is the interpolated value between the current and next point
-          const crossingTime = startTimestamp;
-          const crossingValue = currentActual + (((nextActual - currentActual) * (crossingTime - currentTime)) / (nextTime - currentTime));
-          if (crossingValue >= nextCoverage) {
-            overDataPoints.push([startTimestamp, nextCoverage, crossingValue]);
-
+        const previousActual = previousPoint[actualMeasure]?.value;
+        const previousCoverage = previousPoint[coverageMeasure]?.value;
+    
+        if (currentTime === startTimestamp) {
+          if (currentActual >= currentCoverage) {
+            overDataPoints.push([currentTime, currentCoverage, currentActual]);
+            console.log("330 i, currentCoverage, currentActual", i, currentCoverage, currentActual);
           } else {
-            underDataPoints.push([startTimestamp, nextCoverage, crossingValue]);
+            underDataPoints.push([currentTime, currentCoverage, currentActual]);
           }
         }
-        // // add in interpolated points for the end of the series
-        if (currentTime < endTimestamp && nextTime > endTimestamp) {
-          // The time is the endTimestamp
-          // The value is the interpolated value between the current and next point
-          const crossingTime = endTimestamp;
-          const crossingValue = currentActual + (((nextActual - currentActual) * (crossingTime - currentTime)) / (nextTime - currentTime));
-          if (config.actualsCurveType === 'step') {
-            if (crossingValue >= nextCoverage) {
-              overDataPoints.push([endTimestamp, nextCoverage, nextActual]);
-            } else {
-              underDataPoints.push([endTimestamp, nextCoverage, nextActual]);
-            }
-          } else if (crossingValue >= nextCoverage) {
-            overDataPoints.push([endTimestamp, nextCoverage, crossingValue]);
+
+        if (currentTime === endTimestamp) {
+          if (currentActual >= currentCoverage) {
+            overDataPoints.push([currentTime, previousCoverage, previousActual]);
+            console.log("339 i, previousCoverage, previousActual", i, previousCoverage, previousActual);
           } else {
-            underDataPoints.push([endTimestamp, nextCoverage, crossingValue]);
+            underDataPoints.push([currentTime, previousCoverage, previousActual]);
           }
         }
-        // Add in interpolated points if the coverage is varying inside the range
-        // If the type is not step, these points will use the current coverage, next timestamp -.01 second, n and the next actual.
-        // If the type is step, these points are unnecessary
-        if (currentCoverage !== nextCoverage && currentTime >= startTimestamp && nextTime <= endTimestamp && config.actualsCurveType !== 'step') {
-          const interpolatedStartTime = currentTime + 10;
-          const interpolatedEndTime = nextTime - 10;
+        // if (currentTime <= endTimestamp && previousTime >= startTimestamp) {
+        //   const isCrossing = (previousActual >= previousCoverage && currentActual <= currentCoverage) || (previousActual <= previousCoverage && currentActual >= currentCoverage);
+        //   if (isCrossing) {
+        //     console.log("i, crossing previousPoint, currentPoint, previousCoverage, currentCoverage", i, previousPoint, currentPoint, previousCoverage, currentCoverage);
+        //     // Add the crossing point to the overDataPoints and underDataPoints
+            
+        //       if (previousActual > previousCoverage) {
+        //         console.log("334 previousTime, previousCoverage, previousActual", previousTime, previousCoverage, previousActual);
+        //         overDataPoints.push([previousTime, previousCoverage, previousActual]);
+        //         underDataPoints.push([previousTime, previousCoverage, previousCoverage]);
+        //       } else {
+        //         console.log("338 previousTime, previousCoverage, previousActual", previousTime, previousCoverage, previousActual);
+        //         overDataPoints.push([previousTime, previousCoverage, previousActual]);
+        //         underDataPoints.push([currentTime, previousCoverage, previousActual]);
+        //       }
+            
+        //   }
+        // }
+    
+        // Add in interpolated points for the start of the series
+        // if (previousTime <= startTimestamp && currentTime > startTimestamp) {
+        //   const crossingTime = startTimestamp;
+        //   const crossingValue = previousActual + (((currentActual - previousActual) * (crossingTime - previousTime)) / (currentTime - previousTime));
+        //   if (crossingValue >= currentCoverage) {
+        //     overDataPoints.push([startTimestamp, currentCoverage, crossingValue]);
+        //   } else {
+        //     underDataPoints.push([startTimestamp, currentCoverage, crossingValue]);
+        //   }
+        // }
+    
+        // // Add in interpolated points for the end of the series
+        // if (previousTime < endTimestamp && currentTime > endTimestamp) {
+        //   const crossingTime = endTimestamp;
+        //   const crossingValue = previousActual + (((currentActual - previousActual) * (crossingTime - previousTime)) / (currentTime - previousTime));
+         
+        //     if (crossingValue >= currentCoverage) {
+        //       overDataPoints.push([endTimestamp, currentCoverage, currentActual]);
+        //     } else {
+        //       underDataPoints.push([endTimestamp, currentCoverage, currentActual]);
+        //     }
           
-          if (currentActual > currentCoverage) {
-            overDataPoints.push([interpolatedStartTime, nextCoverage, currentActual]);
-            underDataPoints.push([interpolatedStartTime, nextCoverage, nextCoverage]);
-          } else {
-            overDataPoints.push([interpolatedStartTime, nextCoverage, nextCoverage]);
-            underDataPoints.push([interpolatedStartTime, nextCoverage, currentActual]);
-          }
-          if (nextActual > nextCoverage) {
-            overDataPoints.push([interpolatedEndTime, nextCoverage, nextActual]);
-            underDataPoints.push([interpolatedEndTime, nextCoverage, nextCoverage]);
-          } else {
-            overDataPoints.push([interpolatedEndTime, nextCoverage, nextCoverage]);
-            underDataPoints.push([interpolatedEndTime, nextCoverage, nextActual]);
-          }
-        }
-    }
+        // }
+      }
+    
 
-
-    // console.log("overDataPoints", overDataPoints);
-    // console.log("underDataPoints", underDataPoints);
+    console.log("overDataPoints", overDataPoints);
+    console.log("underDataPoints", underDataPoints);
     return { interpolatedOverDataPoints: overDataPoints, interpolatedUnderDataPoints: underDataPoints };
   };
   // Create an array of range measures with color and value
@@ -431,32 +478,33 @@ const vis: LineAreaOverlapViz = {
       const startTimestamp = moment.tz(getTimestampFromHour(datePart, sortedData[0][measure.name].value + hourOffset), detectedFormat, 'GMT').valueOf();
       const endTimestamp = moment.tz(getTimestampFromHour(datePart, sortedData[0][measure.name].value + hourOffset + 1), detectedFormat, 'GMT').valueOf();
 
-      const overDataPoints = sortedData.map((row) => {
+      const overDataPoints: any[] = []
+      const underDataPoints: any[] = []
+      const dataLength = sortedData.length;
+      sortedData.forEach((row,i) => {
         const timestamp = moment.tz(row[dimension].value, detectedFormat, 'GMT').valueOf();
-        const isInRange = timestamp >= startTimestamp && timestamp <= endTimestamp;
+        const isInRange = timestamp >= startTimestamp && timestamp < endTimestamp;
+        // the blockEndsAt is the lesser of the endTimestamp or the timestamp of the next row
+        if (i === dataLength - 1 || !isInRange) {
+          return;
+        }
+        const blockEndsAt = Math.min(endTimestamp, moment.tz(sortedData[i + 1][dimension].value, detectedFormat, 'GMT').valueOf());
         // const timestampDiffs = [startTimestamp, endTimestamp, timestamp].map(t => moment(t).format('YYYY-MM-DD HH:mm:ss'));
         // console.log('timestampDiffs', timestampDiffs, isInRange);
-        if (isInRange && row[coverageMeasure].value <= row[actualMeasure].value) {
-          return [timestamp, row[coverageMeasure].value, row[actualMeasure].value];
+        if (row[coverageMeasure].value <= row[actualMeasure].value) {
+          overDataPoints.push([timestamp, row[coverageMeasure].value, row[actualMeasure].value])
+          overDataPoints.push([blockEndsAt, row[coverageMeasure].value, row[actualMeasure].value]);
         } else {
-          return null;
+          underDataPoints.push([timestamp, row[coverageMeasure].value, row[actualMeasure].value])
+          underDataPoints.push([blockEndsAt, row[coverageMeasure].value, row[actualMeasure].value]);
         }
-      }).filter((point) => point !== null);
+      })
 
-      const underDataPoints = sortedData.map((row) => {
-        const timestamp = moment.tz(row[dimension].value, detectedFormat, 'GMT').valueOf();
-        const isInRange = timestamp >= startTimestamp && timestamp <= endTimestamp;
-        if (isInRange && row[coverageMeasure].value > row[actualMeasure].value) {
-          return [timestamp, row[coverageMeasure].value, row[actualMeasure].value];
-        } else {
-          return null;
-        }
-      }).filter((point) => point !== null);
-
-      const { interpolatedOverDataPoints, interpolatedUnderDataPoints } = addInterpolatedPoints(sortedData, dimension, actualMeasure, coverageMeasure, startTimestamp, endTimestamp);
-      const combinedOverDataPoints = [...overDataPoints, ...interpolatedOverDataPoints].sort((a, b) => a[0] - b[0]);
-      const combinedUnderDataPoints = [...underDataPoints, ...interpolatedUnderDataPoints].sort((a, b) => a[0] - b[0]);
-
+      // const { interpolatedOverDataPoints, interpolatedUnderDataPoints } = addInterpolatedPoints(sortedData, dimension, actualMeasure, coverageMeasure, startTimestamp, endTimestamp);
+      console.log('calling interpolatedPoints with', sortedData, dimension, actualMeasure, coverageMeasure, startTimestamp, endTimestamp);
+      const combinedOverDataPoints = [...overDataPoints].sort((a, b) => a[0] - b[0]);
+      const combinedUnderDataPoints = [...underDataPoints].sort((a, b) => a[0] - b[0]);
+      console.log("combinedOverDataPoints", combinedOverDataPoints);
       return {
         startTimestamp,
         endTimestamp,
@@ -518,19 +566,26 @@ const vis: LineAreaOverlapViz = {
   // Compose Highcharts Visualization options
   const options: Highcharts.Options = {
     chart: {
-      type: 'area'
+      type: 'area',
+      marginTop: config.showTitle === 'yes' ? 40 : 8,
     },
     title: {
-      text: config.chartTitle || 'Coverage vs Actual'
+      text: config.showTitle === 'yes' ? config.chartTitle : null, 
+      // config.chartTitle || 'Coverage vs Actual'
     },
     tooltip: {
+      style: {
+        fontSize: config.tooltipFontSize || '12px',
+      },
       formatter: function () {
 
         const timestamp = Number(this.point.x);
         let tooltipContent = `<b>${Highcharts.dateFormat('%A %H:%M', timestamp)}</b><br/>`;
 
+        const coverageLabel = config.coverageLabel || 'Coverage';
+        const actualLabel = config.actualLabel || 'Actuals';
         this.points && this.points.forEach(point => {
-          if (point.series.name === "Coverage" || point.series.name === "Avg. Actual") {
+          if (point.series.name === coverageLabel || point.series.name === actualLabel) {
             tooltipContent += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}</b><br/>`;
           }
         });
@@ -541,7 +596,11 @@ const vis: LineAreaOverlapViz = {
     },
     xAxis: {
       type: "datetime",
+      tickLength: 0,
       labels: {
+        style: { 
+          fontSize: config.axisFontSize || '12px'
+        },
         enabled: true,
         formatter: function () {
           return Highcharts.dateFormat('%H:%M', Number(this.value));
@@ -555,17 +614,27 @@ const vis: LineAreaOverlapViz = {
       }))
     },
     yAxis: {
+      visible: config.hideYAxis === 'yes' ? false : true,
       title: {
-        text: 'Values'
+        text: null
+      },
+      tickLength: 0,
+      labels: {
+        style: { 
+          fontSize: config.axisFontSize || '12px'
+        },
       }
     },
     legend: {
+      itemStyle: {
+        fontSize: config.legendFontSize || '12px',
+      },
       align: config.legendAlign || 'center', // Dynamic horizontal alignment
       verticalAlign: config.legendVerticalAlign || 'bottom', // Dynamic vertical alignment
       layout: (config.legendAlign === 'right' && config.legendVerticalAlign === 'middle') ? 'vertical' : 'horizontal', // Set layout to vertical if legend is center-right
     },
     series: [{
-      name: 'Coverage',
+      name: config.coverageLabel || 'Coverage',
       // Pull from the first measure with the _type of coverage
       data: sortedData.map((row) => {
         return {
@@ -576,11 +645,11 @@ const vis: LineAreaOverlapViz = {
       type: 'line',
       color: config.coverageColor && config.coverageColor[0],
       zIndex: 1,
-      step: 'right',
+      step: 'left',
       marker: getMarkerOptions(coverageMarkerType, config.coverageColor[0], config.coverageMarkerSymbol),
       lineWidth: coverageLineWidth
     }, {
-      name: 'Avg. Actual',
+      name: config.actualLabel || 'Avg. Actual',
       data: sortedData.map((row) => {
         return {
           x: moment.tz(row[dimension]?.value, detectedFormat, 'GMT').valueOf(),
@@ -589,6 +658,7 @@ const vis: LineAreaOverlapViz = {
       }),
       type: 'line',
       color: config.actualColor[0],
+      step: 'left',
       zIndex: 1,
       marker: getMarkerOptions(actualMarkerType, config.actualColor[0], config.actualMarkerSymbol),
       lineWidth: actualLineWidth
@@ -598,9 +668,10 @@ const vis: LineAreaOverlapViz = {
     // The two lines are the avg actual and coverage for the data values and the color
     // of the fill is determined by the range measure's overUnderColor
     ...rangeData.map((range) => {
+      const overLabel = range.name === 'First Hour' ? config.firstRangeOverLabel || 'First Hour Over' : config.secondRangeOverLabel || 'Second Hour Over';
       const newRange: Highcharts.SeriesOptionsType = {
-
-        name: `${range.name} Over`,
+        // use the configured name for the range
+        name: overLabel,
         type: 'arearange',
         color: range.overColor,
         data: range.overData,
@@ -613,9 +684,10 @@ const vis: LineAreaOverlapViz = {
       return newRange;
     }),
     ...rangeData.map((range) => {
+      const underLabel = range.name === 'First Hour' ? config.firstRangeUnderLabel || 'First Hour Under' : config.secondRangeUnderLabel || 'Second Hour Under';
+     
       const newRange: Highcharts.SeriesOptionsType = {
-
-        name: `${range.name} Under`,
+        name: underLabel,
         type: 'arearange',
         color: range.underColor,
         data: range.underData,
@@ -630,13 +702,13 @@ const vis: LineAreaOverlapViz = {
 
     ]
   }
-    if(config.actualsCurveType === 'step' && options.series && options.series[1]) {
+    if(options.series && options.series[1]) {
     options.series.forEach(series => {
       // @ts-ignore
-      series.step = 'right';
+      series.step = 'left';
     });
     }
-if (config.actualsCurveType === 'step' && options.series && (detectedFormat === 'YYYY-MM-DD HH:mm' || detectedFormat === 'YYYY-MM-DD HH')) {
+if (options.series && (detectedFormat === 'YYYY-MM-DD HH:mm' || detectedFormat === 'YYYY-MM-DD HH')) {
   options.series.forEach((series, i) => {
     // @ts-ignore
     if (i > 1) series.step = 'left';
