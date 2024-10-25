@@ -195,13 +195,13 @@ looker.plugins.visualizations.add({
           order: 23,
         },
 
-        freeze: {
-          type: "boolean",
-          label: "Freeze First 2 Columns",
-          default: false,
-          order: 1,
-          section: "Table",
-        },
+        // freeze: {
+        //   type: "boolean",
+        //   label: "Freeze First 2 Columns",
+        //   default: false,
+        //   order: 1,
+        //   section: "Table",
+        // },
 
 
 
@@ -236,8 +236,8 @@ looker.plugins.visualizations.add({
       options[indexWidth] =
       {
         label: `Column width for:   ${field}`,
-        default: "150px",
-        placeholder: "150px",
+        default: "140px",
+        placeholder: "140px",
         section: "Table",
         type: "string",
         display: "text",

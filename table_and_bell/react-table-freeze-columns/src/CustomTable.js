@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { Fragment, useMemo } from "react";
 import styled from "styled-components";
 import { useTable, useFlexLayout, useResizeColumns, useSortBy } from "react-table";
 
@@ -146,6 +146,13 @@ const generateColumnBordersCSS = (columnBorders) => {
     .td {
     border-right: ${verticalStripe ? "1px solid #dedede" : ""}
    }
+   .makeGray td,
+  .makeGray tr:nth-child(odd) td,
+  .makeGray .td,
+  .makeGray{
+    background: #f4f3f3 !important
+  }
+
 
 
     ${(props) => props.columnBordersCSS}
@@ -178,7 +185,7 @@ const generateColumnBordersCSS = (columnBorders) => {
 
   function Table({ columns, data, config }) {
 
-    // var { bodyStyle, fixedHeight, unsetTable, indexWidth } = config;
+    var { bodyStyle } = config;
     const defaultColumn = React.useMemo(
       () => ({
         minWidth: 10,
@@ -202,8 +209,6 @@ const generateColumnBordersCSS = (columnBorders) => {
       useResizeColumns
     );
 
-
-
     // Destructure and copy the headerGroups
     const [firstHeaderGroup, ...restHeaderGroups] = headerGroups;
     let newHeaderGroups = headerGroups;
@@ -214,21 +219,11 @@ const generateColumnBordersCSS = (columnBorders) => {
       newHeaderGroups = headerGroups
     }
 
-
-    // columns.forEach((column, index) => {
-    //     console.log("config----------------------------------------", config)
-    //     const indexWidth = `resize_${index}`;
-    //     const columnWidth = config[indexWidth];
-    //     // console.log(columnWidth)
-    // });
-
-    // console.log(columns)
-    //     const indexWidth = `resize_${columns}`;
-    //     const columnWidth = config[indexWidth];
-
+      const tr_length = (headerGroups[0].headers.length - 2) * 160
 
     return (
       <>
+
       <div
       className={`
         ${config.fixedHeight  ? "fixedHeight" : ""}
@@ -240,80 +235,83 @@ const generateColumnBordersCSS = (columnBorders) => {
         <table {...getTableProps()}
         className="table">
 
-        <thead>
-        {newHeaderGroups.map((headerGroup, headerGroupIndex) => (
-          <tr {...headerGroup.getHeaderGroupProps()}
-          className="tr">
-          {headerGroup.headers.map((column, columnIndex) => (
+    <thead>
+    {newHeaderGroups.map((headerGroup, headerGroupIndex) => (
+      <tr {...headerGroup.getHeaderGroupProps()}
+      className="tr">
+      {headerGroup.headers.map((column, columnIndex) => (
 
 
-            <th
-            {...column.getHeaderProps(
-              headerGroupIndex === 1 || headerGroup.length === 1
-              ? column.getSortByToggleProps()
-              : undefined
-            )}
-            className={`th ${column.headerClassName || ''} ${headerGroupIndex === 0 && headerGroups.length === 2 && columnIndex === 0 ? 'top-header' : ''} ${config.hideDimensionHeader && columnIndex === 0 ? 'hide-dimension-header' : ''}`}
+        <th
+        {...column.getHeaderProps(
+          headerGroupIndex === 1 || headerGroup.length === 1
+          ? column.getSortByToggleProps()
+          : undefined
+        )}
+        className={`th ${column.headerClassName || ''} ${headerGroupIndex === 0 && headerGroups.length === 2 && columnIndex === 0 ? 'top-header' : ''} ${config.hideDimensionHeader && columnIndex === 0 ? 'hide-dimension-header' : ''}`}
+        style={{
+          width: config[`resize_${columnIndex}`] ? `${config[`resize_${columnIndex}`]}` : '140px'
+        }}
+        >
+        {column.render("Header")}
+        {(headerGroupIndex === 1 || headerGroup.length === 1) && (
+          <span>{column.isSorted ? "⇅" : " "}</span>
+        )}
+        <div
+        {...column.getResizerProps()}
+        className={`resizer ${column.isResizing ? "isResizing" : ""}`}
+        />
+        </th>
+      ))}
+      </tr>
+    ))}
+    </thead>
+    <tbody {...getTableBodyProps()}>
+    {rows.map((row, i) => {
+      prepareRow(row);
+      return (
+        <tr {...row.getRowProps()} className="tr">
+        {row.cells.map((cell,i) => {
+
+          const cellProps = cell.getCellProps();
+          const customProps = cell.column?.getCellProps ? cell.column?.getCellProps(cell) : null;
+
+          if (customProps ) {
+            const mergedStyles = { ...cellProps.style, ...customProps.style };
+            cellProps.style = mergedStyles;
+            return (
+              <td {...cellProps}
+
+
+              className="td"
+              style={{
+                width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : '140px'
+              }}
+              >
+              {cell.render("Cell")}
+              </td>
+            );
+          } else
+          return (
+            <td {...cellProps}
+            className="td"
             style={{
-              width: config[`resize_${columnIndex}`] ? `${config[`resize_${columnIndex}`]}` : '150px'
+              width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : '140px'
             }}
             >
-            {column.render("Header")}
-            {(headerGroupIndex === 1 || headerGroup.length === 1) && (
-              <span>{column.isSorted ? "⇅" : " "}</span>
-            )}
-            <div
-            {...column.getResizerProps()}
-            className={`resizer ${column.isResizing ? "isResizing" : ""}`}
-            />
-            </th>
-          ))}
-          </tr>
-        ))}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-        {rows.map((row, i) => {
-          prepareRow(row);
-          return (
-            <tr {...row.getRowProps()} className="tr">
-            {row.cells.map((cell,i) => {
-
-              const cellProps = cell.getCellProps();
-              const customProps = cell.column?.getCellProps ? cell.column?.getCellProps(cell) : null;
-
-              if (customProps ) {
-                const mergedStyles = { ...cellProps.style, ...customProps.style };
-                cellProps.style = mergedStyles;
-                return (
-                  <td {...cellProps}
-
-
-                  className="td"
-                  style={{
-                    width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : '150px'
-                  }}
-                  >
-                  {cell.render("Cell")}
-                  </td>
-                );
-              } else
-              return (
-                <td {...cellProps}
-                className="td"
-                style={{
-                  width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : '150px'
-                }}
-                >
-                {cell.render("Cell")}
-                </td>
-              );
-            })}
-            </tr>
+            {cell.render("Cell")}
+            </td>
           );
         })}
-        </tbody>
+        </tr>
+      );
+    })}
+    </tbody>
+
+
         </table>
         </div>
+
         </>
       );
     }
