@@ -1,4 +1,5 @@
 import * as d3 from "d3";
+import x from "highcharts-more";
 
 // Error function approximation
 function erf(x) {
@@ -30,77 +31,214 @@ looker.plugins.visualizations.add({
       label: "Median Name",
       default: "Peer Median",
       display: "text",
+      section: "Labels"
     },
     actualName: {
       type: "string",
       label: "Actual Name",
       default: "Actual/Current",
       display: "text",
+      section: "Labels"
     },
     actualColor: {
       type: "array",
       label: "Actual/Current Color",
       display: "color",
       default: ["#ff0000"],
+      section: "Lines"
     },
     medianColor: {
       type: "array",
       label: "Peer Median Color",
       display: "color",
       default: ["#00ff00"],
+      section: "Lines"
     },
     curveColor: {
       type: "array",
       label: "Curve Color",
       display: "color",
       default: ["#0000ff"],
+      section: "Lines"
     },
     fillColor: {
       type: "array",
       label: "Fill Color",
       display: "color",
       default: ["#0000ff"],
+      section: "Lines"
     },
     hideXAxis: {
       type: "boolean",
       label: "Hide X Axis",
       default: false,
+      section: "Axis"
     },
     title: {
       type: "string",
       label: "Title",
       default: "Bell Curve",
       display: "text",
+      section: "Labels"
     },
     currentRow: {
       type: "string",
       label: "Current Row Column",
       default: "is_current",
       display: "text",
+      section: "Labels"
     },
     curveWidth: {
       type: "string",
       label: "Curve Width",
       default: "1.5",
       display: "text",
+
+      section: "Lines"
     },
     medianWidth: {
       type: "string",
       label: "Median Width",
       default: "3",
       display: "text",
+
+      section: "Lines"
     },
     currentWidth: {
       type: "string",
       label: "Current Width",
       default: "3",
       display: "text",
+      section: "Lines"
     },
-    // create a boolean option to display the tooltip as a percentage
     displayTooltipAsPct: {
       type: "boolean",
       label: "Display Tooltip as Percentage",
       default: false,
+      section: "Labels"
+    },
+    tooltipFontFamily: {
+      type: "string",
+      label: "Tooltip Font Family",
+      default: "IBM Plex Sans, sans-serif",
+      display: "text",
+      section: "Labels"
+    },
+    titleFontFamily: {
+      type: "string",
+      label: "Title Font Family",
+      default: "IBM Plex Sans, sans-serif",
+      display: "text",
+      section: "Labels"
+    },
+    hideTitle: {
+      type: "boolean",
+      label: "Hide Title",
+      default: false,
+      section: "Labels"
+    },
+    titleFontSize: {
+      type: "string",
+      label: "Title Font Size",
+      default: "16px",
+      display: "text",
+      section: "Labels"
+    },
+    titleFontWeight: {
+      type: "string",
+      label: "Title Font Weight",
+      default: "normal",
+      display: "text",
+      section: "Labels"
+    },
+    xAxisFontSize: {
+      type: "string",
+      label: "X Axis Font Size",
+      default: "12px",
+      display: "text",
+      section: "Axis"
+    },
+    xAxisFontFamily: {
+      type: "string",
+      label: "X Axis Font Family",
+      default: "IBM Plex Sans, sans-serif",
+      display: "text",
+      section: "Axis"
+    },
+    xAxisFontWeight: {
+      type: "string",
+      label: "X Axis Font Weight",
+      default: "normal",
+      display: "text",
+      section: "Axis"
+    },
+    hairlineWidth: {
+      type: "string",
+      label: "Hairline Width",
+      default: "1",
+      display: "text",
+      section: "Axis"
+    },
+    // either dashed or solid
+    hairlineStyle: {
+      type: "string",
+      label: "Hairline Style",
+      default: "dashed",
+      display: "select",
+      values: [
+        { "Dashed": "dashed" },
+        { "Solid": "solid" }
+      ],
+      section: "Axis"
+    },
+    hairlineColor: {
+      type: "array",
+      label: "Hairline Color",
+      display: "color",
+      default: ["#000000"],
+      section: "Axis"
+    },
+    labelFontSize: {
+      type: "string",
+      label: "Label Font Size",
+      default: "12px",
+      display: "text",
+      section: "Flags"
+    },
+    labelFontFamily: {
+      type: "string",
+      label: "Label Font Family",
+      default: "IBM Plex Sans, sans-serif",
+      display: "text",
+      section: "Flags"
+    },
+    valueFontSize: {
+      type: "string",
+      label: "Value Font Size",
+      default: "12px",
+      display: "text",
+      section: "Flags"
+    },
+    labelTextColor: {
+      type: "array",
+      label: "Label Text Color",
+      display: "color",
+      default: ["#ffffff"],
+      section: "Flags"
+    },
+    labelFontWeight: {
+      type: "string",
+      label: "Label Font Weight",
+      default: "normal",
+      display: "text",
+      section: "Flags"
+    },
+    valueFontWeight: {
+      type: "string",
+      label: "Value Font Weight",
+      default: "normal",
+      display: "text",
+      section: "Flags"
     },
   },
   create: function (element, config) {
@@ -125,16 +263,13 @@ looker.plugins.visualizations.add({
     const minus1StdDev = median - stddev;
     const plus1StdDev = median + stddev;
 
-    const width = element.clientWidth;
-    const height = element.clientHeight;
+   
     const margin = { top: 20, right: 20, bottom: 10, left: 20 }; // Reduced margins
-
-    // This finds the colors for text inside the flags
-    function getTextColor(backgroundColor) {
-      const color = d3.color(backgroundColor);
-      const brightness = (color.r * 299 + color.g * 587 + color.b * 114) / 1000;
-      return brightness > 125 ? 'black' : 'white';
+    if (config.hideTitle) {
+      margin.top = 10; // Reduce top margin when title is hidden
     }
+    const width = element.clientWidth;
+    const height = element.clientHeight - margin.top;
 
     function roundToSignificantFigures(num, sigFigs) {
       if (num === 0) return 0;
@@ -152,20 +287,39 @@ looker.plugins.visualizations.add({
       .attr("height", height);
 
     // Add title
-    svg.append("text")
-      .attr("x", width / 2)
-      .attr("y", 20)
-      .attr("text-anchor", "middle")
-      .style("font-size", "16px")
-      .style("font-family", "IBM Plex Sans, sans-serif")
-      .text(config.title);
-
+    if (!config.hideTitle) {
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", 20)
+        .attr("text-anchor", "middle")
+        .style("font-size", config.titleFontSize)
+        .style("font-family", config.titleFontFamily)
+        .style("font-weight", config.titleFontWeight)
+        .text(config.title);
+    }
     const chartGroup = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top + 20})`); // Adjusted for title
 
     const x = d3.scaleLinear()
       .domain([median - 4 * stddev, median + 4 * stddev])
       .range([0, width - margin.left - margin.right]);
+
+
+    // Add hairlines for ±1 standard deviation
+    const addHairline = (value) => {
+      chartGroup.append("line")
+        .attr("x1", x(value))
+        .attr("x2", x(value))
+        .attr("y1", 0)
+        .attr("y2", height - margin.top - margin.bottom - 40) // Adjusted for legend
+        .attr("stroke", config.hairlineColor[0])
+        .attr("stroke-width", config.hairlineWidth)
+        .attr("stroke-dasharray", config.hairlineStyle === "dashed" ? "2,2" : "none");
+    };
+
+    // Add hairlines for ±1 standard deviation
+    addHairline(minus1StdDev);
+    addHairline(plus1StdDev);
 
     const bellCurveData = [];
     const stepSize = (8 * stddev) / 1000; // Adjust step size to generate 1000 data points
@@ -183,7 +337,9 @@ looker.plugins.visualizations.add({
       .domain([0, maxY])
       .range([height - margin.top - margin.bottom - 40, 0]); // Adjusted for legend
 
-    const xAxis = d3.axisBottom(x).tickValues([median, minus1StdDev, plus1StdDev]);
+    const xAxis = d3.axisBottom(x)
+      .tickSize(0) // Remove tick marks
+      .tickValues([]); // No tick values;
 
     // Define gradient
     const gradient = svg.append("defs")
@@ -226,75 +382,108 @@ looker.plugins.visualizations.add({
       .attr("stroke", config.curveColor[0])
       .attr("stroke-width", config.curveWidth)
       .attr("d", bellCurve);
-    
+
     function rightRoundedRect(x, y, width, height, radius) {
       return "M" + x + "," + y
-            + "h" + (width - radius)
-            + "a" + radius + "," + radius + " 0 0 1 " + radius + "," + radius
-            + "v" + (height - 2 * radius)
-            + "a" + radius + "," + radius + " 0 0 1 " + -radius + "," + radius
-            + "h" + (radius - width)
-            + "z";
+        + "h" + (width - radius)
+        + "a" + radius + "," + radius + " 0 0 1 " + radius + "," + radius
+        + "v" + (height - 2 * radius)
+        + "a" + radius + "," + radius + " 0 0 1 " + -radius + "," + radius
+        + "h" + (radius - width)
+        + "z";
     }
 
     function leftRoundedRect(x, y, width, height, radius) {
       return "M" + (x + radius) + "," + y // Move to the start of the top-left corner arc
-          + "h" + (width - radius) // Draw a horizontal line to the top-right corner
-          + "v" + height // Draw a vertical line down to the bottom-right corner
-          + "h" + (radius - width) // Draw a horizontal line to the start of the bottom-left corner arc
-          + "a" + radius + "," + radius + " 0 0 1 " + -radius + "," + -radius // Draw the bottom-left corner arc
-          + "v" + (2 * radius - height) // Draw a vertical line up to the start of the top-left corner arc
-          + "a" + radius + "," + radius + " 0 0 1 " + radius + "," + -radius // Draw the top-left corner arc
-          + "z"; // Close the path
+        + "h" + (width - radius) // Draw a horizontal line to the top-right corner
+        + "v" + height // Draw a vertical line down to the bottom-right corner
+        + "h" + (radius - width) // Draw a horizontal line to the start of the bottom-left corner arc
+        + "a" + radius + "," + radius + " 0 0 1 " + -radius + "," + -radius // Draw the bottom-left corner arc
+        + "v" + (2 * radius - height) // Draw a vertical line up to the start of the top-left corner arc
+        + "a" + radius + "," + radius + " 0 0 1 " + radius + "," + -radius // Draw the top-left corner arc
+        + "z"; // Close the path
     }
 
-    const addReferenceLineWithFlag = (value, color, width, label, xOffset, yOffset, isLeft, textLabel) => {
+    function calculateTextWidthAndHeight(text, fontSize, fontFamily, fontWeight) {
+      // Create a temporary SVG element
+      const svg = d3.select('body').append('svg').attr('width', 0).attr('height', 0);
+
+      // Create a temporary text element
+      const textElement = svg.append('text')
+        .attr('x', -9999) // Position off-screen
+        .attr('y', -9999) // Position off-screen
+        .style('font-size', fontSize)
+        .style('font-family', fontFamily)
+        .style('font-weight', fontWeight)
+        .text(text);
+
+      // Get the bounding box of the text element
+      const bbox = textElement.node().getBBox();
+
+      // Remove the temporary SVG element
+      svg.remove();
+
+      // Return the width of the bounding box
+      return [bbox.width, bbox.height];
+    }
+
+    const addReferenceLineWithFlag = (value, color, width, label, yOffset, isLeft, textLabel) => {
       chartGroup.append("line")
         .attr("x1", x(value))
         .attr("x2", x(value))
         .attr("y1", 0)
-        .attr("y2", height - margin.top - margin.bottom - 40) // Adjusted for legend
+        .attr("y2", height - margin.top - margin.bottom - 40)
         .attr("stroke", color)
         .attr("stroke-width", width);
 
+      const valueFontSize = parseInt(config.valueFontSize.replace("px", ""), 10) || 12;
+      const labelFontSize = parseInt(config.labelFontSize.replace("px", ""), 10) || 12;
+      const [labelWidth, labelHeight] = calculateTextWidthAndHeight(textLabel, config.labelFontSize, config.labelFontFamily, config.labelFontWeight);
+      const [valueWidth, valueHeight] = calculateTextWidthAndHeight(label, config.valueFontSize, config.labelFontFamily, config.labelFontWeight);
+      const flagWidth = Math.max(labelWidth, valueWidth) + 20;
+      console.log(label, labelWidth, valueWidth);
+
+      const xOffset = isLeft ? -flagWidth : 0;
+      let flagHeight = labelHeight + valueHeight + 15
+
+      console.log(flagWidth);
+
       chartGroup.append("path")
-      .attr("d", isLeft ? leftRoundedRect(x(value) + xOffset, yOffset, 60, 30, 5) : rightRoundedRect(x(value) + xOffset, yOffset, 60, 30, 5))
-      .attr("fill", color);
+        .attr("d", isLeft ? leftRoundedRect(x(value) + xOffset, yOffset, flagWidth, flagHeight, 5) : rightRoundedRect(x(value) + xOffset, yOffset, flagWidth, flagHeight, 5))
+        .attr("fill", color);
 
       chartGroup.append("text")
-        .attr("x", x(value) + xOffset + 30)
-        .attr("y", yOffset + 15)
+        .attr("x", x(value) + xOffset + flagWidth / 2)
+        .attr("y", yOffset + labelFontSize + 5)
         .attr("text-anchor", "middle")
-        .style("font-size", "12px")
-        .style("font-family", "IBM Plex Sans, sans-serif")
-        .style("fill", getTextColor(color))
+        .style("font-size", config.labelFontSize)
+        .style("font-family", config.labelFontFamily)
+        .style("font-weight", config.labelFontWeight)
+        .style("fill", config.labelTextColor[0])
         .text(textLabel);
 
       chartGroup.append("text")
-        .attr("x", x(value) + xOffset + 30)
-        .attr("y", yOffset + 25)
+        .attr("x", x(value) + xOffset + flagWidth / 2)
+        .attr("y", yOffset + labelFontSize + valueFontSize + 10)
         .attr("text-anchor", "middle")
-        .style("font-size", "12px")
-        .style("font-family", "IBM Plex Sans, sans-serif")
-        .style("fill", getTextColor(color))
+        .style("font-size", config.valueFontSize)
+        .style("font-family", config.labelFontFamily)
+        .style("font-weight", config.valueFontWeight)
+        .style("fill", config.labelTextColor[0])
         .text(label);
 
     };
 
     const actualLabel = roundToSignificantFigures(actual, 2);
     const medianLabel = roundToSignificantFigures(peerMedian, 2);
-    
+
     let actualFlagXOffset, medianFlagXOffset;
     if (actual < peerMedian) {
-      actualFlagXOffset = -59;
-      medianFlagXOffset = 0;
-      addReferenceLineWithFlag(actual, config.actualColor[0], config.currentWidth, actualLabel, actualFlagXOffset, height * 0.2, true, "Yours");
-      addReferenceLineWithFlag(peerMedian, config.medianColor[0], config.medianWidth, medianLabel, medianFlagXOffset, height * 0.4, false, "Median");
+      addReferenceLineWithFlag(actual, config.actualColor[0], config.currentWidth, actualLabel, height * 0.1, true, config.actualName);
+      addReferenceLineWithFlag(peerMedian, config.medianColor[0], config.medianWidth, medianLabel, height * 0.2, false, config.medianName);
     } else {
-      actualFlagXOffset = 0;
-      medianFlagXOffset = -59;
-      addReferenceLineWithFlag(actual, config.actualColor[0], config.currentWidth, actualLabel, actualFlagXOffset, height * 0.2, false, "Yours");
-      addReferenceLineWithFlag(peerMedian, config.medianColor[0], config.medianWidth, medianLabel, medianFlagXOffset, height * 0.4, true, "Median");
+      addReferenceLineWithFlag(actual, config.actualColor[0], config.currentWidth, actualLabel, height * 0.1, false, config.actualName);
+      addReferenceLineWithFlag(peerMedian, config.medianColor[0], config.medianWidth, medianLabel, height * 0.2, true, config.medianName);
     }
     // Conditionally append the x-axis based on config.hideXaxis
     if (!config.hideXAxis) {
@@ -305,70 +494,35 @@ looker.plugins.visualizations.add({
       // Remove tick labels
       xAxisGroup.selectAll(".tick text").style("display", "none");
 
-      // Append ticks for ±1 standard deviation
-      chartGroup.append("line")
-        .attr("x1", x(minus1StdDev))
-        .attr("x2", x(minus1StdDev))
-        .attr("y1", height - margin.top - margin.bottom - 30)
-        .attr("y2", height - margin.top - margin.bottom - 40)
-        .attr("stroke", "black");
-
-      chartGroup.append("line")
-        .attr("x1", x(plus1StdDev))
-        .attr("x2", x(plus1StdDev))
-        .attr("y1", height - margin.top - margin.bottom - 30)
-        .attr("y2", height - margin.top - margin.bottom - 40)
-        .attr("stroke", "black");
-
-        
+      // Add text labels for ±1 standard deviation
       chartGroup.append("text")
-      .attr("x", x(plus1StdDev))
-      .attr("y", height - margin.top - margin.bottom - 15)
-      .attr("text-anchor", "middle")
-      .style("font-size", "12px")
-      .style("font-family", "IBM Plex Sans, sans-serif")
-      .text(`~${roundToSignificantFigures(plus1StdDev, 2)}`);
-      
+        .attr("x", x(plus1StdDev))
+        .attr("y", height - margin.top - margin.bottom - 15)
+        .attr("text-anchor", "middle")
+        .style("font-size", config.xAxisFontSize)
+        .style("font-family", config.xAxisFontFamily)
+        .style("font-weight", config.xAxisFontWeight)
+        .text(`${roundToSignificantFigures(plus1StdDev, 2)}`);
+
       chartGroup.append("text")
         .attr("x", x(minus1StdDev))
         .attr("y", height - margin.top - margin.bottom - 15)
         .attr("text-anchor", "middle")
-        .style("font-size", "12px")
-        .style("font-family", "IBM Plex Sans, sans-serif")
-        .text(`~${roundToSignificantFigures(minus1StdDev, 2)}`);
+        .style("font-size", config.xAxisFontSize)
+        .style("font-family", config.xAxisFontFamily)
+        .style("font-weight", config.xAxisFontWeight)
+        .text(`${roundToSignificantFigures(minus1StdDev, 2)}`);
 
+      // Add median text label
+      chartGroup.append("text")
+        .attr("x", x(median))
+        .attr("y", height - margin.top - margin.bottom - 15)
+        .attr("text-anchor", "middle")
+        .style("font-size", config.xAxisFontSize)
+        .style("font-family", config.xAxisFontFamily)
+        .style("font-weight", config.xAxisFontWeight)
+        .text(`${roundToSignificantFigures(median, 2)}`);
     }
-
-    // Add horizontal legend
-    // const legend = svg.append("g")
-    //   .attr("class", "legend")
-    //   .attr("transform", `translate(${width / 2 - 70}, ${height - 20})`); // Adjusted position
-
-    // const legendData = [
-    //   { label: config.actualName, color: config.actualColor[0], xOffset: actualFlagXOffset },
-    //   { label: config.medianName, color: config.medianColor[0], xOffset: medianFlagXOffset },
-    // ];
-
-    // legend.selectAll("rect")
-    //   .data(legendData)
-    //   .enter()
-    //   .append("rect")
-    //   .attr("x", d => x(actual) + d.xOffset) 
-    //   .attr("y", 0)
-    //   .attr("width", 10)
-    //   .attr("height", 10)
-    //   .attr("fill", d => d.color);
-
-    // legend.selectAll("text")
-    //   .data(legendData)
-    //   .enter()
-    //   .append("text")
-    //   .attr("x", d => x(actual) + d.xOffset + 15)
-    //   .attr("y", 9)
-    //   .text(d => d.label)
-    //   .style("font-size", "12px")
-    //   .style("font-family", "IBM Plex Sans, sans-serif")
-    //   .attr("alignment-baseline", "middle");
 
     // Create tooltip element
     const tooltip = d3.select("body").append("div")
@@ -377,7 +531,7 @@ looker.plugins.visualizations.add({
       .style("background-color", "white")
       .style("border", "1px solid #ccc")
       .style("padding", "10px")
-      .style("font-family", "IBM Plex Sans, sans-serif")
+      .style("font-family", config.tooltipFontFamily)
       .style("display", "none");
 
     // Function to calculate the CDF of the normal distribution
