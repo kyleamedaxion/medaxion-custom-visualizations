@@ -284,11 +284,6 @@ looker.plugins.visualizations.add({
       }
     });
 
-
-
-
-
-
     // If there are pivots, I want to also add rename options for the pivot values
     if (queryResponse.pivots && queryResponse.pivots.length > 0) {
       queryResponse.pivots.forEach((pivot, index) => {
@@ -306,6 +301,9 @@ looker.plugins.visualizations.add({
 
       });
     }
+
+
+
     // register the options with the visualization
     this.trigger("registerOptions", options);
 
