@@ -219,7 +219,10 @@ const generateColumnBordersCSS = (columnBorders) => {
       newHeaderGroups = headerGroups
     }
 
-      const tr_length = (headerGroups[0].headers.length - 2) * 160
+// columns.forEach((column, index, pivot) => {
+//   const indexWidth = `resize_${index}`;
+//   console.log(indexWidth, "in table")
+// })
 
     return (
       <>
@@ -253,6 +256,7 @@ const generateColumnBordersCSS = (columnBorders) => {
           width: config[`resize_${columnIndex}`] ? `${config[`resize_${columnIndex}`]}` : '140px'
         }}
         >
+    
         {column.render("Header")}
         {(headerGroupIndex === 1 || headerGroup.length === 1) && (
           <span>{column.isSorted ? "⇅" : " "}</span>
@@ -281,8 +285,6 @@ const generateColumnBordersCSS = (columnBorders) => {
             cellProps.style = mergedStyles;
             return (
               <td {...cellProps}
-
-
               className="td"
               style={{
                 width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : '140px'
@@ -319,8 +321,6 @@ const generateColumnBordersCSS = (columnBorders) => {
     const keyHeaderMapFunction = (key, config, measureKeys) => {
       const configKey = `rename_${key}`;
       const headerName = config[configKey] || key;
-
-// console.log(headerName)
 
       return {
         Header: headerName,

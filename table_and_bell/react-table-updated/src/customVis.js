@@ -71,7 +71,7 @@ looker.plugins.visualizations.add({
       display: "select",
       values: [{ "Roboto": "'Roboto'" } , { "Open Sans": "'Open Sans'" }, {"Montserrat" : "'Montserrat'"}],
       section: "Styles",
-      default: "'Roboto', sans-serif;",
+      default: "'Roboto', sans-serif",
       order: 9
 
     },
@@ -231,8 +231,10 @@ looker.plugins.visualizations.add({
 
    columnNames.forEach(function(field, index) {
      const indexWidth = `resize_${index}`;
+     //
+     // console.log(indexWidth, "indexWidth 1")
 
-       if (!options[indexWidth]) {
+    if (!options[indexWidth]) {
       options[indexWidth] =
       {
         label: `Column width for:   ${field}`,
@@ -289,6 +291,8 @@ looker.plugins.visualizations.add({
       queryResponse.pivots.forEach((pivot, index) => {
 
         const configKey = `rename_${pivot.key}`;
+
+        console.log(configKey, "configKey")
         if (!options[configKey]) {
           options[configKey] = {
             type: "string",
@@ -300,6 +304,31 @@ looker.plugins.visualizations.add({
         }
 
       });
+
+   let lastIndex = queryResponse.pivots.length - 1;
+
+      queryResponse.pivots.forEach((pivot, index) => {
+        const indexWidth = `resize_${index}`;
+
+
+        const pivotWidth = `resize_${lastIndex + index + 2}`;
+
+        console.log(pivotWidth)
+
+             if (!options[pivotWidth]) {
+               options[pivotWidth] =
+               {
+                 label: `Column width for:  ${pivot.key}`,
+                 default: "140px",
+                 placeholder: "140px",
+                 section: "Table",
+                 type: "string",
+                 display: "text",
+                order: 20 + index + columnNames.length,
+               }
+             }
+          });
+
     }
 
 
