@@ -106,7 +106,7 @@ export const vis: GanttViz = {
     const title = data[0][titleColumn].value || config.chartTitle || "Gantt Chart";
     const legendFontSize = config.legendFontSize || 12;
     const yAxis = config.toolOffY;
-    // const bodyStyle = config.bodyStyle;
+
 
     const getColor = (category: string) => {
       return config[`colorFor${category}`] || 'black';
@@ -158,7 +158,7 @@ export const vis: GanttViz = {
     const tempSvg = d3.select('body').append('svg');
     const tempText = tempSvg.append('text')
       .attr('class', 'temp-text')
-
+      .style("fill", config.titleColor ? config.titleColor : "#000000")
       .style('font-size', '10px')
       .text(longestLabel);
 
@@ -169,7 +169,7 @@ export const vis: GanttViz = {
     const tempTitleSvg = d3.select('body').append('svg');
     const tempTitleText = tempTitleSvg.append('text')
       .attr('class', 'temp-text')
-
+      .style("fill", config.titleColor ? config.titleColor : "#000000")
       .style('font-size', `${config.titleSize || 18}px`)
       .style('font-weight', `${config.weightTitle || "300"}`)
       .text(title);
@@ -198,14 +198,17 @@ export const vis: GanttViz = {
       .attr("x", width / 2)
       .attr("y", -margin.top / 4)
       .attr("text-anchor", "middle")
+      .style("fill", config.titleColor ? config.titleColor: "#000")
       .style("font-size", `${config.titleSize || 18}px`)
       .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
       .style('font-weight', `${config.weightTitle || "300"}`)
+      // .style("color", config.colors[0] ? config.colors[0] : "black")
       .text(title);
 
     const defs = svg.append("defs");
 
     defs.append("pattern")
+
       .attr("id", "crosshatch")
       .attr("patternUnits", "userSpaceOnUse")
       .attr("width", 10)
@@ -269,6 +272,7 @@ export const vis: GanttViz = {
       .range([0, height])
       .padding(0.1);
 
+
     // Define custom time format for military time without leading zeros
     const customTimeFormat = d3.timeFormat("%-H:%M");
 
@@ -279,7 +283,10 @@ export const vis: GanttViz = {
     // @ts-ignore
     .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%-H:%M")).tickSizeOuter(0))
     .selectAll('text')
+    // .style("fill", config.colors[0] ? config.colors[0] : "black")
+
     .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
+    .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
 
 
     if (!yAxis) {
@@ -287,6 +294,8 @@ export const vis: GanttViz = {
     .attr("class", "y axis")
     .call(d3.axisLeft(y).tickSizeOuter(0))
     .selectAll('text')
+    .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
+
     .style("font-family", `${config.bodyStyle || "'Roboto'"}`)
     .style("text-anchor", `${config.rotateY ? "middle" : ""}`)
     .attr("transform", `${config.rotateY ? "rotate(-90) translate(7.5, -15)" : ""}`);
@@ -299,6 +308,7 @@ export const vis: GanttViz = {
       .attr("y", 0)
       .attr("width", x(new Date(refBands.refBand1End)) - x(new Date(refBands.refBand1Start)))
       .attr("height", height)
+
       .attr("fill", (d: any) => {
         return config.refBand1Color || "rgba(68, 170, 213, 0.1)";
       });
@@ -309,6 +319,7 @@ export const vis: GanttViz = {
       .attr("y", 0)
       .attr("width", x(new Date(refBands.refBand2End)) - x(new Date(refBands.refBand2Start)))
       .attr("height", height)
+
       .attr("fill", config.refBand2Color || "rgba(68, 170, 213, 0.1)");
 
     // Add background rectangles for alternating rows
@@ -344,6 +355,7 @@ export const vis: GanttViz = {
       .attr("height", y.bandwidth())
       // allow for color with patterns
       .attr("fill", d => getColor(d[colorCategory].value))
+
       .attr("rx", 3)
       .attr("fill-opacity", d => getPattern(d[colorCategory].value) === 'solid' ? 1 : 1); // Adjust opacity if pattern is used
 
@@ -422,11 +434,14 @@ export const vis: GanttViz = {
           .style("opacity", 0);
       });
 
+console.log(config.moveLegend)
+
+const makeNumber = Number(config.moveLegend)
     // Add legend
     const legend = svg.append("g")
       .attr("class", "legend")
 
-      .attr("transform", `translate(0, ${height + 38})`)
+      .attr("transform", `translate(0, ${height + makeNumber})`)
       .style('font-family', `${config.bodyStyle || "'Roboto'"}`) // Add font-family
       .style("font-size", legendFontSize); // Add font-size
 
@@ -443,9 +458,9 @@ export const vis: GanttViz = {
 
       legendItem.append("rect")
         .attr("x", 0)
-        .attr("y", -1)
-        .attr("width", 12)
-        .attr("height", 12)
+        .attr("y", config.moveLegendCircle ? -`${config.moveLegendCircle}` : 0)
+        .attr("width", config.changeCircleSize ? config.changeCircleSize : 12)
+        .attr("height", config.changeCircleSize ? config.changeCircleSize : 12)
         .attr("fill", range.color)
         .attr("radius", 3)
         .attr("rx", config.square ? 0 : 50)
@@ -453,7 +468,7 @@ export const vis: GanttViz = {
 
 
       const text = legendItem.append("text")
-        .attr("x", 20)
+        .attr("x", 22)
         .attr("y", 10)
         .text(range.label)
         .style("font-size", legendFontSize);
@@ -474,9 +489,9 @@ export const vis: GanttViz = {
 
       legendItem.append("rect")
         .attr("x", 0)
-        .attr("y", -1)
-        .attr("width", 12)
-        .attr("height", 12)
+        .attr("y", config.moveLegendCircle ? -`${config.moveLegendCircle}` : 0)
+        .attr("width", config.changeCircleSize ? config.changeCircleSize : 12)
+        .attr("height", config.changeCircleSize ? config.changeCircleSize : 12)
         .attr("fill", color)
         .attr("radius", 3)
           .attr("rx", config.square ? 0 : 50)
@@ -486,9 +501,9 @@ export const vis: GanttViz = {
       if (pattern !== 'Solid') {
         legendItem.append("rect")
           .attr("x", 0)
-          .attr("y", -1)
-          .attr("width", 12)
-          .attr("height", 12)
+          .attr("y", config.moveLegendCircle ? -`${config.moveLegendCircle}` : 0)
+          .attr("width", config.changeCircleSize ? config.changeCircleSize : 12)
+          .attr("height", config.changeCircleSize ? config.changeCircleSize : 12)
           .attr("fill", fill)
           .attr("rx", config.square ? 0 : 50)
           .attr("ry", 50)
@@ -505,7 +520,7 @@ export const vis: GanttViz = {
 
       // Adjust spacing based on text width
       const textWidth = text?.node()?.getBBox()?.width ?? 120;
-      legendItems.push({ element: legendItem, width: textWidth + 45 }); // Store element and its width
+      legendItems.push({ element: legendItem, width: textWidth + 50 }); // Store element and its width
 
     });
     // Calculate total width of all legend items
@@ -518,7 +533,7 @@ export const vis: GanttViz = {
 
     var legendRight = (width - totalLegendWidth)
 
-    console.log(config.legendPosition, "config.legendPosition")
+
 
     // Position legend items
     let currentX =
