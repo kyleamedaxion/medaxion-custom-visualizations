@@ -234,7 +234,20 @@ looker.plugins.visualizations.add({
     columnNames.forEach(function (field, index) {
       const indexWidth = `resize_${index}`;
 
-      if (!options[indexWidth] && index < 1) {
+
+    if (!options[indexWidth] && index < 1) {
+        options[indexWidth] = {
+          label: `Column width for:   ${field}`,
+          default: "140px",
+          placeholder: "140px",
+          section: "Table",
+          type: "string",
+          display: "text",
+          order: 10 + index,
+        };
+      }
+
+    else if (!options[indexWidth]) {
         options[indexWidth] = {
           label: `Column width for:   ${field}`,
           default: "140px",

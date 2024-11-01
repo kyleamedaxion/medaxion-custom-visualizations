@@ -74,6 +74,8 @@ const Styles = ({ children, config, rowCount }) => {
     [borderBetweenRows, rowCount]
   );
 
+  console.log()
+
   const StyledWrapper = styled.div`
     @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
 
@@ -101,7 +103,8 @@ const Styles = ({ children, config, rowCount }) => {
     thead > tr > th {
       ${(props) => props.headerStyles}
       display: flex;
-      padding-top: 0em !important;
+      padding-top: 0em!important;
+      padding-bottom: 0em!important
     }
     thead {
       padding-top: 0em !important;
@@ -119,9 +122,7 @@ const Styles = ({ children, config, rowCount }) => {
       vertical-align: middle;
     }
 
-    th {
-      background: ${headerColor[0] || "#ffffff"};
-    }
+
     tr:nth-child(odd) td {
       background: ${odd ? `${odd} !important` : "#fff !important"};
     }
@@ -129,7 +130,7 @@ const Styles = ({ children, config, rowCount }) => {
       color: ${headerFontColor ? `${headerFontColor} !important` : "#212529"};
       font-weight: ${weightHeader ? `${weightHeader} !important` : "500 !important"};
       font-size: ${headFontSize ? `${headFontSize} !important` : "14px"};
-      margin-top: -5px !important;
+
     }
     .td {
       color: ${fontColor ? `${fontColor} !important` : "#212529"};
@@ -196,7 +197,7 @@ function Table({ columns, data, config }) {
     []
   );
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, state, resetResizing } =
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, state, resetResizing, headerColor } =
     useTable(
       {
         columns,
@@ -247,7 +248,9 @@ function Table({ columns, data, config }) {
   //     const columnWidth = config[indexWidth];
   // debugger;
   // console.log("config----------------------------------------", config, columns);
+const colors = config.headerColor[0]
 
+console.log(colors)
   return (
     <>
       <div
@@ -291,6 +294,7 @@ function Table({ columns, data, config }) {
                       width: config[`resize_${columnIndex}`]
                         ? `${config[`resize_${columnIndex}`]}`
                         : "140px",
+                        background: colors ? colors : "#fff"
                     }}
                   >
                     {column.render("Header")}
