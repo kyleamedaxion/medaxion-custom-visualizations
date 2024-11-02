@@ -231,9 +231,10 @@ looker.plugins.visualizations.add({
       .map((dim) => dim.name)
       .concat(queryResponse.fields.measure_like.map((measure) => measure.name));
 
+
+  if (queryResponse.pivots && queryResponse.pivots.length > 0) {
     columnNames.forEach(function (field, index) {
       const indexWidth = `resize_${index}`;
-
 
     if (!options[indexWidth] && index < 1) {
         options[indexWidth] = {
@@ -247,7 +248,16 @@ looker.plugins.visualizations.add({
         };
       }
 
-    else if (!options[indexWidth]) {
+    });
+
+  }
+
+  else {
+
+    columnNames.forEach(function (field, index) {
+      const indexWidth = `resize_${index}`;
+
+    if (!options[indexWidth]) {
         options[indexWidth] = {
           label: `Column width for:   ${field}`,
           default: "140px",
@@ -258,7 +268,10 @@ looker.plugins.visualizations.add({
           order: 10 + index,
         };
       }
+
     });
+
+  }
 
     columnNames.forEach((colName, index) => {
       const configKey = `rename_${colName}`;
