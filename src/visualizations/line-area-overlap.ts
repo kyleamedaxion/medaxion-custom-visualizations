@@ -233,12 +233,19 @@ const vis: LineAreaOverlapViz = {
       ],
       section: "Labels",
     },
+    axisFontColor: {
+      type: "string",
+      label: "Axis Font Color",
+      display: "color",
+      default: "#2C2D33",
+      section: "Axes",
+    },
     axisFontSize: {
       type: "string",
       label: "Axis Font Size",
       display: "text",
       default: "12px",
-      section: "Labels",
+      section: "Axes",
     },
     legendFontSize: {
       type: "string",
@@ -262,6 +269,20 @@ const vis: LineAreaOverlapViz = {
         { "Yes": "yes" },
         { "No": "no" },
       ],
+      section: "Axes",
+    },
+    xAxisLineColor: {
+      type: "string",
+      label: "X Axis Line Color",
+      display: "color",
+      default: "gray",
+      section: "Axes",
+    },
+    legendFontColor: {
+      type: "string",
+      label: "Legend Font Color",
+      display: "color",
+      default: "#2C2D33",
       section: "Style",
     },
   },
@@ -272,10 +293,6 @@ const vis: LineAreaOverlapViz = {
   },
   // Render in response to the data or settings changing
   update(data, element, config, queryResponse) {
-    // console.log("data", data);
-    // console.log("element", element);
-    // console.log("config", config);
-    // console.log("queryResponse", queryResponse);
 
     // Expect 1 time series dimension and 3 or more measures
     const errors = handleErrors(this, queryResponse, {
@@ -378,345 +395,270 @@ const vis: LineAreaOverlapViz = {
       return moment.tz(a[dimension].value, detectedFormat, 'GMT').valueOf() - moment.tz(b[dimension].value, detectedFormat, 'GMT').valueOf();
     });
 
-    const addInterpolatedPoints = (
-      sortedData: any[],
-      dimension: string,
-      actualMeasure: string,
-      coverageMeasure: string,
-      startTimestamp: number,
-      endTimestamp: number
-    ) => {
-      let overDataPoints: any[] = [];
-      let underDataPoints: any[] = [];
+    // Create an array of range measures with color and value
+    // This comes from the first row of data
+    const rangeMeasuresData = measures1.filter((measure) => config[`${measure.name}_type`] === "range");
+    // Range data for the first highlighted hour
 
-      for (let i = 1; i < sortedData.length; i++) {
-        const currentPoint = sortedData[i];
-        const previousPoint = sortedData[i - 1];
-    
-        const currentTime = moment.tz(currentPoint[dimension].value, detectedFormat, 'GMT').valueOf();
-        const previousTime = moment.tz(previousPoint[dimension].value, detectedFormat, 'GMT').valueOf();
-        const currentActual = currentPoint[actualMeasure]?.value;
-        const currentCoverage = currentPoint[coverageMeasure]?.value;
-        const previousActual = previousPoint[actualMeasure]?.value;
-        const previousCoverage = previousPoint[coverageMeasure]?.value;
-    
-        if (currentTime === startTimestamp) {
-          if (currentActual >= currentCoverage) {
-            overDataPoints.push([currentTime, currentCoverage, currentActual]);
-            console.log("330 i, currentCoverage, currentActual", i, currentCoverage, currentActual);
-          } else {
-            underDataPoints.push([currentTime, currentCoverage, currentActual]);
+    const rangeData: any[] = [];
+
+    rangeMeasuresData.forEach((measure, rangeDataIndex) => {
+      const calculateDataPoints = (hourOffset: number) => {
+        const startTimestamp = moment.tz(getTimestampFromHour(datePart, sortedData[0][measure.name].value + hourOffset), detectedFormat, 'GMT').valueOf();
+        const endTimestamp = moment.tz(getTimestampFromHour(datePart, sortedData[0][measure.name].value + hourOffset + 1), detectedFormat, 'GMT').valueOf();
+
+        const overDataPoints: any[] = []
+        const underDataPoints: any[] = []
+        const dataLength = sortedData.length;
+        sortedData.forEach((row, i) => {
+          const timestamp = moment.tz(row[dimension].value, detectedFormat, 'GMT').valueOf();
+          const isInRange = timestamp >= startTimestamp && timestamp < endTimestamp;
+          // the blockEndsAt is the lesser of the endTimestamp or the timestamp of the next row
+          if (i === dataLength - 1 || !isInRange) {
+            return;
           }
-        }
-
-        if (currentTime === endTimestamp) {
-          if (currentActual >= currentCoverage) {
-            overDataPoints.push([currentTime, previousCoverage, previousActual]);
-            console.log("339 i, previousCoverage, previousActual", i, previousCoverage, previousActual);
+          const blockEndsAt = Math.min(endTimestamp, moment.tz(sortedData[i + 1][dimension].value, detectedFormat, 'GMT').valueOf());
+          // const timestampDiffs = [startTimestamp, endTimestamp, timestamp].map(t => moment(t).format('YYYY-MM-DD HH:mm:ss'));
+          // console.log('timestampDiffs', timestampDiffs, isInRange);
+          if (row[coverageMeasure].value <= row[actualMeasure].value) {
+            overDataPoints.push([timestamp, row[coverageMeasure].value, row[actualMeasure].value])
+            overDataPoints.push([blockEndsAt, row[coverageMeasure].value, row[actualMeasure].value]);
           } else {
-            underDataPoints.push([currentTime, previousCoverage, previousActual]);
+            underDataPoints.push([timestamp, row[coverageMeasure].value, row[actualMeasure].value])
+            underDataPoints.push([blockEndsAt, row[coverageMeasure].value, row[actualMeasure].value]);
           }
-        }
-        // if (currentTime <= endTimestamp && previousTime >= startTimestamp) {
-        //   const isCrossing = (previousActual >= previousCoverage && currentActual <= currentCoverage) || (previousActual <= previousCoverage && currentActual >= currentCoverage);
-        //   if (isCrossing) {
-        //     console.log("i, crossing previousPoint, currentPoint, previousCoverage, currentCoverage", i, previousPoint, currentPoint, previousCoverage, currentCoverage);
-        //     // Add the crossing point to the overDataPoints and underDataPoints
-            
-        //       if (previousActual > previousCoverage) {
-        //         console.log("334 previousTime, previousCoverage, previousActual", previousTime, previousCoverage, previousActual);
-        //         overDataPoints.push([previousTime, previousCoverage, previousActual]);
-        //         underDataPoints.push([previousTime, previousCoverage, previousCoverage]);
-        //       } else {
-        //         console.log("338 previousTime, previousCoverage, previousActual", previousTime, previousCoverage, previousActual);
-        //         overDataPoints.push([previousTime, previousCoverage, previousActual]);
-        //         underDataPoints.push([currentTime, previousCoverage, previousActual]);
-        //       }
-            
-        //   }
-        // }
-    
-        // Add in interpolated points for the start of the series
-        // if (previousTime <= startTimestamp && currentTime > startTimestamp) {
-        //   const crossingTime = startTimestamp;
-        //   const crossingValue = previousActual + (((currentActual - previousActual) * (crossingTime - previousTime)) / (currentTime - previousTime));
-        //   if (crossingValue >= currentCoverage) {
-        //     overDataPoints.push([startTimestamp, currentCoverage, crossingValue]);
-        //   } else {
-        //     underDataPoints.push([startTimestamp, currentCoverage, crossingValue]);
-        //   }
-        // }
-    
-        // // Add in interpolated points for the end of the series
-        // if (previousTime < endTimestamp && currentTime > endTimestamp) {
-        //   const crossingTime = endTimestamp;
-        //   const crossingValue = previousActual + (((currentActual - previousActual) * (crossingTime - previousTime)) / (currentTime - previousTime));
-         
-        //     if (crossingValue >= currentCoverage) {
-        //       overDataPoints.push([endTimestamp, currentCoverage, currentActual]);
-        //     } else {
-        //       underDataPoints.push([endTimestamp, currentCoverage, currentActual]);
-        //     }
-          
-        // }
-      }
-    
+        })
 
-    console.log("overDataPoints", overDataPoints);
-    console.log("underDataPoints", underDataPoints);
-    return { interpolatedOverDataPoints: overDataPoints, interpolatedUnderDataPoints: underDataPoints };
-  };
-  // Create an array of range measures with color and value
-  // This comes from the first row of data
-  const rangeMeasuresData = measures1.filter((measure) => config[`${measure.name}_type`] === "range");
-  // Range data for the first highlighted hour
-
-  const rangeData: any[] = [];
-
-  rangeMeasuresData.forEach((measure, rangeDataIndex) => {
-    const calculateDataPoints = (hourOffset: number) => {
-      const startTimestamp = moment.tz(getTimestampFromHour(datePart, sortedData[0][measure.name].value + hourOffset), detectedFormat, 'GMT').valueOf();
-      const endTimestamp = moment.tz(getTimestampFromHour(datePart, sortedData[0][measure.name].value + hourOffset + 1), detectedFormat, 'GMT').valueOf();
-
-      const overDataPoints: any[] = []
-      const underDataPoints: any[] = []
-      const dataLength = sortedData.length;
-      sortedData.forEach((row,i) => {
-        const timestamp = moment.tz(row[dimension].value, detectedFormat, 'GMT').valueOf();
-        const isInRange = timestamp >= startTimestamp && timestamp < endTimestamp;
-        // the blockEndsAt is the lesser of the endTimestamp or the timestamp of the next row
-        if (i === dataLength - 1 || !isInRange) {
-          return;
-        }
-        const blockEndsAt = Math.min(endTimestamp, moment.tz(sortedData[i + 1][dimension].value, detectedFormat, 'GMT').valueOf());
-        // const timestampDiffs = [startTimestamp, endTimestamp, timestamp].map(t => moment(t).format('YYYY-MM-DD HH:mm:ss'));
-        // console.log('timestampDiffs', timestampDiffs, isInRange);
-        if (row[coverageMeasure].value <= row[actualMeasure].value) {
-          overDataPoints.push([timestamp, row[coverageMeasure].value, row[actualMeasure].value])
-          overDataPoints.push([blockEndsAt, row[coverageMeasure].value, row[actualMeasure].value]);
-        } else {
-          underDataPoints.push([timestamp, row[coverageMeasure].value, row[actualMeasure].value])
-          underDataPoints.push([blockEndsAt, row[coverageMeasure].value, row[actualMeasure].value]);
-        }
-      })
-
-      // const { interpolatedOverDataPoints, interpolatedUnderDataPoints } = addInterpolatedPoints(sortedData, dimension, actualMeasure, coverageMeasure, startTimestamp, endTimestamp);
-      console.log('calling interpolatedPoints with', sortedData, dimension, actualMeasure, coverageMeasure, startTimestamp, endTimestamp);
-      const combinedOverDataPoints = [...overDataPoints].sort((a, b) => a[0] - b[0]);
-      const combinedUnderDataPoints = [...underDataPoints].sort((a, b) => a[0] - b[0]);
-      console.log("combinedOverDataPoints", combinedOverDataPoints);
-      return {
-        startTimestamp,
-        endTimestamp,
-        overDataPoints: combinedOverDataPoints,
-        underDataPoints: combinedUnderDataPoints,
+        // const { interpolatedOverDataPoints, interpolatedUnderDataPoints } = addInterpolatedPoints(sortedData, dimension, actualMeasure, coverageMeasure, startTimestamp, endTimestamp);
+        // console.log('calling interpolatedPoints with', sortedData, dimension, actualMeasure, coverageMeasure, startTimestamp, endTimestamp);
+        const combinedOverDataPoints = [...overDataPoints].sort((a, b) => a[0] - b[0]);
+        const combinedUnderDataPoints = [...underDataPoints].sort((a, b) => a[0] - b[0]);
+        // console.log("combinedOverDataPoints", combinedOverDataPoints);
+        return {
+          startTimestamp,
+          endTimestamp,
+          overDataPoints: combinedOverDataPoints,
+          underDataPoints: combinedUnderDataPoints,
+        };
       };
+
+      const firstHourData = calculateDataPoints(0);
+      const secondHourData = calculateDataPoints(1);
+
+      rangeData.push({
+        name: "First Hour",
+        color: config.rangeColor1[0],
+        underColor: config.underColor1[0],
+        overColor: config.overColor1[0],
+        value: firstHourData.startTimestamp,
+        overData: firstHourData.overDataPoints,
+        underData: firstHourData.underDataPoints,
+        shiftChangeNumber: rangeDataIndex
+      });
+
+      rangeData.push({
+        name: "Second Hour",
+        color: config.rangeColor2[0],
+        underColor: config.underColor2[0],
+        overColor: config.overColor2[0],
+        value: secondHourData.startTimestamp,
+        overData: secondHourData.overDataPoints,
+        underData: secondHourData.underDataPoints,
+        shiftChangeNumber: rangeDataIndex,
+      });
+
+    });
+
+    // console.log("rangeData", rangeData);
+    // Retrieve the marker type configurations
+    const actualMarkerType = config.actualMarkerType;
+    const coverageMarkerType = config.coverageMarkerType;
+
+    // Function to map marker type to Highcharts marker configuration
+    const getMarkerOptions = (markerType: string, color: string = "#ffffff", symbol: string = "circle") => {
+      switch (markerType) {
+        case 'none':
+          return { enabled: false, fillColor: '#000000', lineWidth: 0 };
+        case 'filled':
+          return { enabled: true, fillColor: color, lineWidth: 0, symbol: symbol };
+        case 'outline':
+          return { enabled: true, fillColor: '#ffffff', lineWidth: 2, lineColor: color, symbol: symbol };
+        default:
+          return { enabled: true, fillColor: color, lineWidth: 0, symbol: symbol };
+      }
     };
 
-    const firstHourData = calculateDataPoints(0);
-    const secondHourData = calculateDataPoints(1);
+    // Retrieve the line width configurations
+    const actualLineWidth = config.actualLineWidth || 2; // Default to 2 if not set
+    const coverageLineWidth = config.coverageLineWidth || 2; // Default to 2 if not set
 
-    rangeData.push({
-      name: "First Hour",
-      color: config.rangeColor1[0],
-      underColor: config.underColor1[0],
-      overColor: config.overColor1[0],
-      value: firstHourData.startTimestamp,
-      overData: firstHourData.overDataPoints,
-      underData: firstHourData.underDataPoints,
-      showInLegend: rangeDataIndex === 0 ? true : false,
-    });
-
-    rangeData.push({
-      name: "Second Hour",
-      color: config.rangeColor2[0],
-      underColor: config.underColor2[0],
-      overColor: config.overColor2[0],
-      value: secondHourData.startTimestamp,
-      overData: secondHourData.overDataPoints,
-      underData: secondHourData.underDataPoints,
-      showInLegend: rangeDataIndex === 0 ? true : false,
-    });
-
-  });
-
-  // console.log("rangeData", rangeData);
-  // Retrieve the marker type configurations
-  const actualMarkerType = config.actualMarkerType;
-  const coverageMarkerType = config.coverageMarkerType;
-
-  // Function to map marker type to Highcharts marker configuration
-  const getMarkerOptions = (markerType: string, color: string = "#ffffff", symbol: string = "circle") => {
-    switch (markerType) {
-      case 'none':
-        return { enabled: false, fillColor: '#000000', lineWidth: 0 };
-      case 'filled':
-        return { enabled: true, fillColor: color, lineWidth: 0, symbol: symbol };
-      case 'outline':
-        return { enabled: true, fillColor: '#ffffff', lineWidth: 2, lineColor: color, symbol: symbol };
-      default:
-        return { enabled: true, fillColor: color, lineWidth: 0, symbol: symbol };
-    }
-  };
-
-  // Retrieve the line width configurations
-  const actualLineWidth = config.actualLineWidth || 2; // Default to 2 if not set
-  const coverageLineWidth = config.coverageLineWidth || 2; // Default to 2 if not set
-
-  // Compose Highcharts Visualization options
-  const options: Highcharts.Options = {
-    chart: {
-      type: 'area',
-      marginTop: config.showTitle === 'yes' ? 40 : 8,
-    },
-    title: {
-      text: config.showTitle === 'yes' ? config.chartTitle : null, 
-      // config.chartTitle || 'Coverage vs Actual'
-    },
-    tooltip: {
-      style: {
-        fontSize: config.tooltipFontSize || '12px',
+    // Compose Highcharts Visualization options
+    const options: Highcharts.Options = {
+      credits: {
+        enabled: false
       },
-      formatter: function () {
-
-        const timestamp = Number(this.point.x);
-        let tooltipContent = `<b>${Highcharts.dateFormat('%A %H:%M', timestamp)}</b><br/>`;
-
-        const coverageLabel = config.coverageLabel || 'Coverage';
-        const actualLabel = config.actualLabel || 'Actuals';
-        this.points && this.points.forEach(point => {
-          if (point.series.name === coverageLabel || point.series.name === actualLabel) {
-            tooltipContent += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}</b><br/>`;
-          }
-        });
-
-        return tooltipContent;
+      chart: {
+        type: 'area',
+        marginTop: config.showTitle === 'yes' ? 40 : 8,
+        marginBottom: 50,
       },
-      shared: true
-    },
-    xAxis: {
-      type: "datetime",
-      tickLength: 0,
-      labels: {
-        style: { 
-          fontSize: config.axisFontSize || '12px'
-        },
-        enabled: true,
-        formatter: function () {
-          return Highcharts.dateFormat('%H:%M', Number(this.value));
-        }
-      },
-      // Make a plotband for each range measure
-      plotBands: rangeData.map((range) => ({
-        from: range.value,
-        to: range.value.valueOf() + 3600000,
-        color: range?.color,
-      }))
-    },
-    yAxis: {
-      visible: config.hideYAxis === 'yes' ? false : true,
       title: {
-        text: null
+        text: config.showTitle === 'yes' ? config.chartTitle : null,
+        // config.chartTitle || 'Coverage vs Actual'
       },
-      tickLength: 0,
-      labels: {
-        style: { 
-          fontSize: config.axisFontSize || '12px'
+      tooltip: {
+        style: {
+          fontSize: config.tooltipFontSize || '12px',
         },
-      }
-    },
-    legend: {
-      itemStyle: {
-        fontSize: config.legendFontSize || '12px',
+        formatter: function () {
+
+          const timestamp = Number(this.point.x);
+          let tooltipContent = `<b>${Highcharts.dateFormat('%A %H:%M', timestamp)}</b><br/>`;
+
+          const coverageLabel = config.coverageLabel || 'Coverage';
+          const actualLabel = config.actualLabel || 'Actuals';
+          this.points && this.points.forEach(point => {
+            if (point.series.name === coverageLabel || point.series.name === actualLabel) {
+              tooltipContent += `<span style="color:${point.color}">\u25CF</span> ${point.series.name}: <b>${point.y}</b><br/>`;
+            }
+          });
+
+          return tooltipContent;
+        },
+        shared: true
       },
-      align: config.legendAlign || 'center', // Dynamic horizontal alignment
-      verticalAlign: config.legendVerticalAlign || 'bottom', // Dynamic vertical alignment
-      layout: (config.legendAlign === 'right' && config.legendVerticalAlign === 'middle') ? 'vertical' : 'horizontal', // Set layout to vertical if legend is center-right
-    },
-    series: [{
-      name: config.coverageLabel || 'Coverage',
-      // Pull from the first measure with the _type of coverage
-      data: sortedData.map((row) => {
-        return {
-          x: moment.tz(row[dimension]?.value, detectedFormat, 'GMT').valueOf(),
-          y: row[coverageMeasure]?.value
+      xAxis: {
+        lineColor: config.xAxisLineColor || 'gray',
+        type: "datetime",
+        tickLength: 0,
+        labels: {
+          style: {
+            fontSize: config.axisFontSize || '12px',
+            color: config.axisFontColor || '#2C2D33'
+          },
+          y: 20,
+          enabled: true,
+          formatter: function () {
+            return Highcharts.dateFormat('%H:%M', Number(this.value));
+          }
+        },
+        // Make a plotband for each range measure
+        plotBands: rangeData.map((range) => ({
+          from: range.value,
+          to: range.value.valueOf() + 3600000,
+          color: range?.color,
+        }))
+      },
+      yAxis: {
+        visible: config.hideYAxis === 'yes' ? false : true,
+        title: {
+          text: null
+        },
+        tickLength: 0,
+        labels: {
+          style: {
+            fontSize: config.axisFontSize || '12px',
+            color: config.axisFontColor || '#2C2D33'
+          },
         }
-      }),
-      type: 'line',
-      color: config.coverageColor && config.coverageColor[0],
-      zIndex: 1,
-      step: 'left',
-      marker: getMarkerOptions(coverageMarkerType, config.coverageColor[0], config.coverageMarkerSymbol),
-      lineWidth: coverageLineWidth
-    }, {
-      name: config.actualLabel || 'Avg. Actual',
-      data: sortedData.map((row) => {
-        return {
-          x: moment.tz(row[dimension]?.value, detectedFormat, 'GMT').valueOf(),
-          y: row[actualMeasure]?.value
+      },
+      legend: {
+        itemStyle: {
+          fontSize: config.legendFontSize || '12px',
+          color: config.legendFontColor || '#2C2D33'
+        },
+        y: 23,
+        align: config.legendAlign || 'center', // Dynamic horizontal alignment
+        verticalAlign: config.legendVerticalAlign || 'bottom', // Dynamic vertical alignment
+        layout: (config.legendAlign === 'right' && config.legendVerticalAlign === 'middle') ? 'vertical' : 'horizontal', // Set layout to vertical if legend is center-right
+      },
+      series: [{
+        name: config.coverageLabel || 'Coverage',
+        showInLegend: !!config.coverageLabel,
+        // Pull from the first measure with the _type of coverage
+        data: sortedData.map((row) => {
+          return {
+            x: moment.tz(row[dimension]?.value, detectedFormat, 'GMT').valueOf(),
+            y: row[coverageMeasure]?.value
+          }
+        }),
+        type: 'line',
+        color: config.coverageColor && config.coverageColor[0],
+        zIndex: 1,
+        step: 'left',
+        marker: getMarkerOptions(coverageMarkerType, config.coverageColor[0], config.coverageMarkerSymbol),
+        lineWidth: coverageLineWidth
+      }, {
+        name: config.actualLabel || 'Avg. Actual',
+        showInLegend: !!config.actualLabel,
+        data: sortedData.map((row) => {
+          return {
+            x: moment.tz(row[dimension]?.value, detectedFormat, 'GMT').valueOf(),
+            y: row[actualMeasure]?.value
+          }
+        }),
+        type: 'line',
+        color: config.actualColor[0],
+        step: 'left',
+        zIndex: 1,
+        marker: getMarkerOptions(actualMarkerType, config.actualColor[0], config.actualMarkerSymbol),
+        lineWidth: actualLineWidth
+      },
+      // Make a series for each range measure
+      // This is a floating area series that only exists to create the fill between the two lines
+      // The two lines are the avg actual and coverage for the data values and the color
+      // of the fill is determined by the range measure's overUnderColor
+      ...rangeData.map((range) => {
+        const overLabel = range.name === 'First Hour' ? config.firstRangeOverLabel : config.secondRangeOverLabel ;
+        console.log('range', range);
+        const newRange: Highcharts.SeriesOptionsType = {
+          // use the configured name for the range
+          name: overLabel,
+          type: 'arearange',
+          showInLegend: range.shiftChangeNumber === 0 && !!overLabel,
+          color: range.overColor,
+          data: range.overData,
+          fillOpacity: 1,
+          zIndex: 0,
+          marker: { enabled: false },
+          dataLabels: { enabled: false },
         }
+        return newRange;
       }),
-      type: 'line',
-      color: config.actualColor[0],
-      step: 'left',
-      zIndex: 1,
-      marker: getMarkerOptions(actualMarkerType, config.actualColor[0], config.actualMarkerSymbol),
-      lineWidth: actualLineWidth
-    },
-    // Make a series for each range measure
-    // This is a floating area series that only exists to create the fill between the two lines
-    // The two lines are the avg actual and coverage for the data values and the color
-    // of the fill is determined by the range measure's overUnderColor
-    ...rangeData.map((range) => {
-      const overLabel = range.name === 'First Hour' ? config.firstRangeOverLabel || 'First Hour Over' : config.secondRangeOverLabel || 'Second Hour Over';
-      const newRange: Highcharts.SeriesOptionsType = {
-        // use the configured name for the range
-        name: overLabel,
-        type: 'arearange',
-        color: range.overColor,
-        data: range.overData,
-        fillOpacity: 1,
-        zIndex: 0,
-        marker: { enabled: false },
-        dataLabels: { enabled: false },
-        showInLegend: range.showInLegend
-      }
-      return newRange;
-    }),
-    ...rangeData.map((range) => {
-      const underLabel = range.name === 'First Hour' ? config.firstRangeUnderLabel || 'First Hour Under' : config.secondRangeUnderLabel || 'Second Hour Under';
-     
-      const newRange: Highcharts.SeriesOptionsType = {
-        name: underLabel,
-        type: 'arearange',
-        color: range.underColor,
-        data: range.underData,
-        fillOpacity: 1,
-        zIndex: 0,
-        marker: { enabled: false },
-        dataLabels: { enabled: false },
-        showInLegend: range.showInLegend
-      }
-      return newRange;
-    }),
+      ...rangeData.map((range) => {
+        const underLabel = range.name === 'First Hour' ? config.firstRangeUnderLabel : config.secondRangeUnderLabel ;
 
-    ]
-  }
-    if(options.series && options.series[1]) {
-    options.series.forEach(series => {
-      // @ts-ignore
-      series.step = 'left';
-    });
+        const newRange: Highcharts.SeriesOptionsType = {
+          name: underLabel,
+          type: 'arearange',
+          color: range.underColor,
+          data: range.underData,
+          fillOpacity: 1,
+          zIndex: 0,
+          marker: { enabled: false },
+          dataLabels: { enabled: false },
+          showInLegend: range.shiftChangeNumber === 0 && !!underLabel,
+        }
+        return newRange;
+      }),
+
+      ]
     }
-if (options.series && (detectedFormat === 'YYYY-MM-DD HH:mm' || detectedFormat === 'YYYY-MM-DD HH')) {
-  options.series.forEach((series, i) => {
-    // @ts-ignore
-    if (i > 1) series.step = 'left';
-  });
-}
+    if (options.series && options.series[1]) {
+      options.series.forEach(series => {
+        // @ts-ignore
+        series.step = 'left';
+      });
+    }
+    if (options.series && (detectedFormat === 'YYYY-MM-DD HH:mm' || detectedFormat === 'YYYY-MM-DD HH')) {
+      options.series.forEach((series, i) => {
+        // @ts-ignore
+        if (i > 1) series.step = 'left';
+      });
+    }
 
 
-Highcharts.chart(element, options);
+    Highcharts.chart(element, options);
   },
 };
 

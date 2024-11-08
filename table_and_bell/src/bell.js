@@ -74,6 +74,13 @@ looker.plugins.visualizations.add({
       default: false,
       section: "Axis"
     },
+    xAxisColor: {
+      type: "array",
+      label: "X Axis Color",
+      display: "color",
+      default: ["#000000"],
+      section: "Axis"
+    },
     title: {
       type: "string",
       label: "Title",
@@ -191,6 +198,12 @@ looker.plugins.visualizations.add({
       ],
       section: "Axis"
     },
+    hideTooltips: {
+      type: "boolean",
+      label: "Hide Tooltips",
+      default: false,
+      section: "Labels"
+    },
     hairlineColor: {
       type: "array",
       label: "Hairline Color",
@@ -253,32 +266,76 @@ looker.plugins.visualizations.add({
       done();
       return;
     }
-
     const median = currentRow['median'].value;
+    // @ts-ignore
+    const medianFormatted = LookerCharts.Utils.textForCell(currentRow['median']);
     const stddev = currentRow['stddev'].value;
     const actual = currentRow['actual'].value;
+    // @ts-ignore
+    const actualFormatted = LookerCharts.Utils.textForCell(currentRow['actual']);
     const peerMedian = currentRow['median'].value;
+
+    function formatValue(value, referenceFormatted) {
+      // Determine the format of the referenceFormatted value
+      let decimalPlaces = referenceFormatted.includes('.') ? referenceFormatted.split('.')[1].length : 0;
+      if (referenceFormatted.includes('%')) {
+        // Format as percentage
+        const strippedPercentage = referenceFormatted.replace('%', '');
+        decimalPlaces = referenceFormatted.includes('.') ? strippedPercentage.split('.')[1].length : 0;
+        return `${(value * 100).toFixed(decimalPlaces)}%`;
+      } else if (referenceFormatted.includes('$')) {
+        // handle numbers with k, m, b, t
+        let decimalPlaces = 0
+        let suffix = ''
+
+        if (referenceFormatted.includes('k')) {
+          value = value / 1000;
+          suffix = 'k'
+          decimalPlaces = decimalPlaces - 1;
+        } else if (referenceFormatted.includes('m')) {
+          value = value / 1000000;
+          suffix = 'm'
+          decimalPlaces = decimalPlaces - 1;
+        } else if (referenceFormatted.includes('b')) {
+          value = value / 1000000000;
+          suffix = 'b'
+          decimalPlaces = decimalPlaces - 1;
+        }
+        // handle numbers with commas
+        if (referenceFormatted.includes(',')) {
+          value = value.toLocaleString();
+        }
+        // handle decimal precision
+        if (decimalPlaces > 0) {
+          return `$${value.toFixed(decimalPlaces)}${suffix}`;
+        }
+
+        // Format as currency
+        return `$${value.toFixed(0)}${suffix}`;
+      } else if (referenceFormatted.includes('.') && referenceFormatted.split('.')[1].length > 0) {
+        // Format as float with the same number of decimal places
+        const decimalPlaces = referenceFormatted.split('.')[1].length;
+        return value.toFixed(decimalPlaces);
+      } else {
+        // Format as integer
+        return value.toFixed(0);
+      }
+    }
 
     // Calculate positions for ±1 standard deviation
     const minus1StdDev = median - stddev;
     const plus1StdDev = median + stddev;
 
-   
+    // Format ±1 standard deviation values
+    const minus1StdDevFormatted = formatValue(minus1StdDev, actualFormatted);
+    const plus1StdDevFormatted = formatValue(plus1StdDev, actualFormatted);
+
     const margin = { top: 20, right: 20, bottom: 10, left: 20 }; // Reduced margins
     if (config.hideTitle) {
-      margin.top = 10; // Reduce top margin when title is hidden
+      margin.top = 5; // Reduce top margin when title is hidden
     }
     const width = element.clientWidth;
-    const height = element.clientHeight - margin.top;
-
-    function roundToSignificantFigures(num, sigFigs) {
-      if (num === 0) return 0;
-      const d = Math.ceil(Math.log10(num < 0 ? -num : num));
-      const power = sigFigs - d;
-      const magnitude = Math.pow(10, power);
-      const shifted = Math.round(num * magnitude);
-      return Math.round(shifted / magnitude);
-    }
+    const height = element.clientHeight - margin.top + 15;
 
     const svg = d3.select("#bellCurveChart")
       .html("") // Clear any existing content
@@ -331,7 +388,7 @@ looker.plugins.visualizations.add({
     }
 
     // Calculate the maximum y value for the bell curve data
-    const maxY = d3.max(bellCurveData, d => d.y);
+    const maxY = d3.max(bellCurveData, d => d.y) || 1;
 
     const y = d3.scaleLinear()
       .domain([0, maxY])
@@ -418,13 +475,13 @@ looker.plugins.visualizations.add({
         .text(text);
 
       // Get the bounding box of the text element
-      const bbox = textElement.node().getBBox();
+      const bbox = textElement?.node()?.getBBox();
 
       // Remove the temporary SVG element
       svg.remove();
 
       // Return the width of the bounding box
-      return [bbox.width, bbox.height];
+      return [bbox?.width || 100, bbox?.height || 100];
     }
 
     const addReferenceLineWithFlag = (value, color, width, label, yOffset, isLeft, textLabel) => {
@@ -474,16 +531,16 @@ looker.plugins.visualizations.add({
 
     };
 
-    const actualLabel = roundToSignificantFigures(actual, 2);
-    const medianLabel = roundToSignificantFigures(peerMedian, 2);
+    // const actualLabel = roundToSignificantFigures(actual, 2);
+    // const medianLabel = roundToSignificantFigures(peerMedian, 2);
 
     let actualFlagXOffset, medianFlagXOffset;
     if (actual < peerMedian) {
-      addReferenceLineWithFlag(actual, config.actualColor[0], config.currentWidth, actualLabel, height * 0.1, true, config.actualName);
-      addReferenceLineWithFlag(peerMedian, config.medianColor[0], config.medianWidth, medianLabel, height * 0.2, false, config.medianName);
+      addReferenceLineWithFlag(actual, config.actualColor[0], config.currentWidth, actualFormatted, height * 0.1, true, config.actualName);
+      addReferenceLineWithFlag(peerMedian, config.medianColor[0], config.medianWidth, medianFormatted, height * 0.2, false, config.medianName);
     } else {
-      addReferenceLineWithFlag(actual, config.actualColor[0], config.currentWidth, actualLabel, height * 0.1, false, config.actualName);
-      addReferenceLineWithFlag(peerMedian, config.medianColor[0], config.medianWidth, medianLabel, height * 0.2, true, config.medianName);
+      addReferenceLineWithFlag(actual, config.actualColor[0], config.currentWidth, actualFormatted, height * 0.1, false, config.actualName);
+      addReferenceLineWithFlag(peerMedian, config.medianColor[0], config.medianWidth, medianFormatted, height * 0.2, true, config.medianName);
     }
     // Conditionally append the x-axis based on config.hideXaxis
     if (!config.hideXAxis) {
@@ -494,6 +551,10 @@ looker.plugins.visualizations.add({
       // Remove tick labels
       xAxisGroup.selectAll(".tick text").style("display", "none");
 
+      // Apply x-axis line color
+      xAxisGroup.selectAll(".domain")
+        .style("stroke", config.xAxisColor[0] || "#000000");
+
       // Add text labels for ±1 standard deviation
       chartGroup.append("text")
         .attr("x", x(plus1StdDev))
@@ -502,7 +563,7 @@ looker.plugins.visualizations.add({
         .style("font-size", config.xAxisFontSize)
         .style("font-family", config.xAxisFontFamily)
         .style("font-weight", config.xAxisFontWeight)
-        .text(`${roundToSignificantFigures(plus1StdDev, 2)}`);
+        .text(plus1StdDevFormatted);
 
       chartGroup.append("text")
         .attr("x", x(minus1StdDev))
@@ -511,7 +572,7 @@ looker.plugins.visualizations.add({
         .style("font-size", config.xAxisFontSize)
         .style("font-family", config.xAxisFontFamily)
         .style("font-weight", config.xAxisFontWeight)
-        .text(`${roundToSignificantFigures(minus1StdDev, 2)}`);
+        .text(minus1StdDevFormatted);
 
       // Add median text label
       chartGroup.append("text")
@@ -521,49 +582,50 @@ looker.plugins.visualizations.add({
         .style("font-size", config.xAxisFontSize)
         .style("font-family", config.xAxisFontFamily)
         .style("font-weight", config.xAxisFontWeight)
-        .text(`${roundToSignificantFigures(median, 2)}`);
+        .text(medianFormatted);
     }
 
-    // Create tooltip element
-    const tooltip = d3.select("body").append("div")
-      .attr("class", "tooltip")
-      .style("position", "absolute")
-      .style("background-color", "white")
-      .style("border", "1px solid #ccc")
-      .style("padding", "10px")
-      .style("font-family", config.tooltipFontFamily)
-      .style("display", "none");
+    if (!config.hideTooltips) {
 
-    // Function to calculate the CDF of the normal distribution
-    const normalCDF = (x, mean, stddev) => {
-      return (1 - erf((mean - x) / (Math.sqrt(2) * stddev))) / 2;
-    };
+      // Create tooltip element
+      const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("background-color", "white")
+        .style("border", "1px solid #ccc")
+        .style("padding", "10px")
+        .style("font-family", config.tooltipFontFamily)
+        .style("display", "none");
 
-    // Calculate percentages using the CDF
-    const percentageAbove = (1 - normalCDF(actual, median, stddev)) * 100;
-    const percentageBelow = normalCDF(actual, median, stddev) * 100;
+      // Function to calculate the CDF of the normal distribution
+      const normalCDF = (x, mean, stddev) => {
+        return (1 - erf((mean - x) / (Math.sqrt(2) * stddev))) / 2;
+      };
 
-    const tooltipValueSuffix = config.displayTooltipAsPct ? `${percentageAbove.toFixed(2)}%` : actual;
-    // Add overlay for tooltip
-    svg.append("rect")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("fill", "none")
-      .attr("pointer-events", "all")
-      .on("mouseover", () => tooltip.style("display", "block"))
-      .on("mousemove", (event) => {
-        tooltip
-          .html(`
-        <strong>${config.actualName}:</strong> ${config.displayTooltipAsPct ? actual.toFixed(2) + '%' : Math.round(actual)}<br>
-        <strong>${config.medianName}:</strong> ${config.displayTooltipAsPct ? peerMedian.toFixed(2) + '%' : Math.round(peerMedian)}<br>
+      // Calculate percentages using the CDF
+      const percentageAbove = (1 - normalCDF(actual, median, stddev)) * 100;
+      const percentageBelow = normalCDF(actual, median, stddev) * 100;
+
+      // Add overlay for tooltip
+      svg.append("rect")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("fill", "none")
+        .attr("pointer-events", "all")
+        .on("mouseover", () => tooltip.style("display", "block"))
+        .on("mousemove", (event) => {
+          tooltip
+            .html(`
+        <strong>${config.actualName}:</strong> ${actualFormatted}<br>
+        <strong>${config.medianName}:</strong> ${medianFormatted}<br>
         ${percentageAbove.toFixed(0)}%<strong> Above You</strong><br>
         ${percentageBelow.toFixed(0)}%<strong> Below You</strong>
       `)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-      })
-      .on("mouseout", () => tooltip.style("display", "none"));
-
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", () => tooltip.style("display", "none"));
+    }
     done();
   },
 });

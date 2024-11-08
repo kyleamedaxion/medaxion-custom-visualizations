@@ -1,8 +1,4 @@
 import { Looker, VisualizationDefinition } from "../common/types";
-import {
-  handleErrors,
-  processQueryResponse,
-} from "../common/utils";
 import * as d3 from 'd3';
 import { ganttOptions } from '../common/ganttOptions';
 
@@ -34,19 +30,6 @@ export const vis: GanttViz = {
   },
   updateAsync(data, element, config, queryResponse, details, done) {
 
-    // const isOK: boolean = handleErrors(this, queryResponse, {
-    //   min_pivots: 0,
-    //   max_pivots: 0,
-    //   min_dimensions: 10,
-    //   max_dimensions: 10,
-    //   min_measures: 0,
-    //   max_measures: 0,
-    // });
-    // if (!isOK) {
-    //   done()
-    //   return;
-    // }
-
     const { dimension_like: dimensions } = queryResponse.fields;
 
     // Populate the select options for dimensions
@@ -58,13 +41,14 @@ export const vis: GanttViz = {
       this.options[option].values = dimensionOptions;
     });
 
-      console.log('optins to set', optionsToSet)
-      console.log('all options',this.options)
+    console.log('optins to set', optionsToSet)
+    console.log('all options', this.options)
     const colorCategory = config.colorCategory;
     if (!colorCategory) {
       // @ts-ignore
       this.trigger && this.trigger("registerOptions", this.options);
-      return}
+      return
+    }
     console.log('colorCategory', colorCategory);
     const colorCategoryValues = data.map(row => row[colorCategory].value).filter((value, index, self) => self.indexOf(value) === index);
     colorCategoryValues.forEach((value, index) => {
@@ -163,17 +147,19 @@ export const vis: GanttViz = {
     const tempTitleSvg = d3.select('body').append('svg');
     const tempTitleText = tempTitleSvg.append('text')
       .attr('class', 'temp-text')
-      .style('font-family', "'Source Sans Pro', sans-serif")
+      .style('font-family', config.titleFontFamily || "'Source Sans Pro', sans-serif")
       .style('font-size', `${config.titleSize || 20}px`)
+      .style('font-weight', config.titleWeight || 'bold')
+      .style('fill', config.titleColor || 'black')
       .text(title);
     const titleHeight = tempTitleText.node()?.getBBox().height || 0;
     tempTitleSvg.remove();
 
     // Set up SVG container
-    const margin = { top: titleHeight + 10, right: 10, bottom: 38, left: labelWidth + 10 }; // Add some padding to the label width
+    const margin = { top: titleHeight + 10, right: 10, bottom: 50, left: labelWidth + 10 }; // Add some padding to the label width
     // const margin = { top: 34, right: 10, bottom: 38, left: labelWidth + 10 }; // Add some padding to the label width
     const width = element.clientWidth - margin.left - margin.right;
-    const height = element.clientHeight - margin.top - margin.bottom;
+    const height = element.clientHeight - margin.top - margin.bottom + 4;
 
     const svg = d3.select(element)
       .append("svg")
@@ -186,8 +172,10 @@ export const vis: GanttViz = {
       .attr("x", width / 2)
       .attr("y", -margin.top / 2)
       .attr("text-anchor", "middle")
-      .style("font-size", `${config.titleSize || 20}px`)
-      .style("font-family", "'Source Sans Pro', sans-serif")
+      .style('font-family', config.titleFontFamily || "'Source Sans Pro', sans-serif")
+      .style('font-size', `${config.titleSize || 20}px`)
+      .style('font-weight', config.titleWeight || 'bold')
+      .style('fill', config.titleColor || 'black')
       .text(title);
 
     const defs = svg.append("defs");
@@ -254,25 +242,46 @@ export const vis: GanttViz = {
     const y = d3.scaleBand()
       .domain(categories)
       .range([0, height])
-      .padding(0.1);
+      .padding(config.rowPaddingPercentage ? config.rowPaddingPercentage / 100 : 0.1); // Use the padding percentage from config
 
-    // Define custom time format for military time without leading zeros
-    const customTimeFormat = d3.timeFormat("%-H:%M");
+    // Define custom time format for military time without leading zeros  
+    const customTimeFormat = d3.timeFormat("%-I:%M %p");
+
 
     // Add axes
     svg.append("g")
       .attr("class", "x axis")
       .attr("transform", `translate(0,${height})`)
       // @ts-ignore
-      .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%-H:%M")))
+      .call(d3.axisBottom(x)
+        .ticks(config.xAxisTickCount || 10)
+        .tickSize(0)
+        // @ts-ignore
+        .tickFormat(d3.timeFormat("%-I %p"))
+      )
       .selectAll('text')
-      .style("font-family", "'Source Sans Pro', sans-serif");
+      .style("font-family", config.xAxisFontFamily || "'Source Sans Pro', sans-serif")
+      .style("font-size", config.xAxisLabelSize || "14px")
+      .attr("dy", "1.5em"); // Shift labels down
 
+    // Change x-axis line color
+    svg.selectAll(".x.axis path")
+      .style("stroke", config.xAxisLineColor || 'lightgray');
+
+    // Conditionally render y-axis ticks
     svg.append("g")
       .attr("class", "y axis")
-      .call(d3.axisLeft(y))
-      .selectAll('text')
-      .style("font-family", "'Source Sans Pro', sans-serif");
+      .call(d3.axisLeft(y).tickSize(0))
+      .selectAll("text")
+      .style("font-family", config.yAxisFontFamily || "'Source Sans Pro', sans-serif")
+      .style("font-size", config.yAxisLabelSize || "14px")
+      .style("color", config.yAxisLabelColor || "black");
+
+    // Conditionally render y-axis line
+    if (config.removeYAxis) {
+      svg.selectAll(".y.axis path")
+        .style("stroke", "none"); // Hide y-axis line
+    }
 
     // Draw range bands
     svg.append("rect")
@@ -368,14 +377,34 @@ export const vis: GanttViz = {
           .duration(200)
           .style("opacity", .9);
         tooltip.html(`
-          <b>${config.yAxisCategories}: ${d[nameDim].value}</b><br/>
-          <b>Category:</b> <span style="color: ${getColor(d[colorCategory].value)};">${d[colorCategory].value}</span><br/>
           <b>Start:</b> ${d[startDim].value}<br/>
           <b>End:</b> ${d[endDim].value}<br/>
-          <b>Duration:</b> ${Math.floor((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) / 3600000)} hours ${Math.floor(((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) % 3600000) / 60000)} minutes
+          <b>Duration:</b> ${Math.floor((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) / 3600000)}:${Math.floor(((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) % 3600000) / 60000)} minutes
         `)
           .style("left", (event.pageX + 5) + "px")
           .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mousemove", function (event) {
+        const tooltipWidth = tooltip?.node()?.offsetWidth || 100;
+        const tooltipHeight = tooltip?.node()?.offsetHeight || 100;
+        const pageWidth = window.innerWidth;
+        const pageHeight = window.innerHeight;
+        const xOffset = 10;
+        const yOffset = 10;
+    
+        let left = event.pageX + xOffset;
+        let top = event.pageY + yOffset;
+    
+        if (event.pageX + tooltipWidth + xOffset > pageWidth) {
+          left = event.pageX - tooltipWidth - xOffset;
+        }
+    
+        if (event.pageY + tooltipHeight + yOffset > pageHeight) {
+          top = event.pageY - tooltipHeight - yOffset;
+        }
+    
+        tooltip.style("left", `${left}px`)
+          .style("top", `${top}px`);
       })
       .on("mouseout", function (d) {
         tooltip.transition()
@@ -423,16 +452,16 @@ export const vis: GanttViz = {
 
       legendItem.append("rect")
         .attr("x", 0)
-        .attr("y", 0)
-        .attr("width", 20)
-        .attr("height", 20)
+        .attr("y", 1)
+        .attr("width", 15)
+        .attr("height", 15)
         .attr("fill", range.color)
         .attr("radius", 3);
 
       const text = legendItem.append("text")
         .attr("x", 30)
         .attr("y", 15)
-        .text(range.label)      
+        .text(range.label)
         .style("font-size", legendFontSize);
 
       const textWidth = text?.node()?.getBBox()?.width ?? 120;
@@ -451,9 +480,9 @@ export const vis: GanttViz = {
 
       legendItem.append("rect")
         .attr("x", 0)
-        .attr("y", 0)
-        .attr("width", 20)
-        .attr("height", 20)
+        .attr("y", 1)
+        .attr("width", 15)
+        .attr("height", 15)
         .attr("fill", color)
         .attr("radius", 3);
 
@@ -461,9 +490,9 @@ export const vis: GanttViz = {
       if (pattern !== 'Solid') {
         legendItem.append("rect")
           .attr("x", 0)
-          .attr("y", 0)
-          .attr("width", 20)
-          .attr("height", 20)
+          .attr("y", 1)
+          .attr("width", 15)
+          .attr("height", 15)
           .attr("fill", fill)
           .attr("fill-opacity", 0.5); // Adjust opacity to show both color and pattern
       }
@@ -471,9 +500,14 @@ export const vis: GanttViz = {
       const text = legendItem.append("text")
         .attr("x", 30)
         .attr("y", 15)
-        .text(value)      
+        .text(value)
         .style("font-size", legendFontSize)
-        .style("font-family", "'Source Sans Pro', sans-serif"); 
+        .style("font-family", "'Source Sans Pro', sans-serif");
+
+        
+        // Adjust legend position
+      svg.selectAll(".legend")
+        .attr("transform", `translate(0, ${height + margin.bottom - 17})`); // Adjusted legend position
 
       // Adjust spacing based on text width
       const textWidth = text?.node()?.getBBox()?.width ?? 120;

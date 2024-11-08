@@ -32,7 +32,7 @@ let webpackConfig = {
   },
   devServer: {
     compress: true,
-    port: 9000,
+    port: 8080,
     server: {
       type: 'https'
     },
