@@ -23,9 +23,10 @@ export const vis: GanttViz = {
     const style = document.createElement('style');
     style.innerHTML = `
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
     .d3-gantt-vis {
-      font-family:${config.bodyStyle ? config.bodyStyle : "'Roboto'"}
+      font-family:${config.bodyStyle ? config.bodyStyle : "'Noto Sans'"}
     }
 
   `;
@@ -50,7 +51,8 @@ export const vis: GanttViz = {
     if (!colorCategory) {
       // @ts-ignore
       this.trigger && this.trigger("registerOptions", this.options);
-      return}
+      return
+    }
     // console.log('colorCategory', colorCategory);
     const colorCategoryValues = data.map(row => row[colorCategory].value).filter((value, index, self) => self.indexOf(value) === index);
     colorCategoryValues.forEach((value, index) => {
@@ -154,11 +156,11 @@ export const vis: GanttViz = {
       .attr('class', 'temp-text')
       .style("fill", config.titleColor ? config.titleColor : "#000000")
       .style('font-size', `${config.titleSize || 18}px`)
-      .style('font-weight', `${config.weightTitle || "300"}`)
+      .style('font-weight', `${config.weightTitle || "400"}`)
       .text(title);
     const titleHeight = tempTitleText.node()?.getBBox().height || 0;
 
-    tempText.style('font-family', `${config.bodyStyle || "'Roboto'"}`);
+    tempText.style('font-family', `${config.bodyStyle || "'Noto Sans'"}`);
     tempTitleSvg.remove();
 
 
@@ -183,8 +185,8 @@ export const vis: GanttViz = {
       .attr("text-anchor", "middle")
       .style("fill", config.titleColor ? config.titleColor: "#000")
       .style("font-size", `${config.titleSize || 18}px`)
-      .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
-      .style('font-weight', `${config.weightTitle || "300"}`)
+      .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`)
+      .style('font-weight', `${config.weightTitle || "400"}`)
       // .style("color", config.colors[0] ? config.colors[0] : "black")
       .text(title);
 
@@ -258,10 +260,6 @@ export const vis: GanttViz = {
     // Define custom time format for military time without leading zeros
     const customTimeFormat = d3.timeFormat("%-I:%M %p");
 
-
-    // Define custom time format for military time without leading zeros
-    const customTimeFormat = d3.timeFormat("%-H:%M");
-
     // Add axes
     svg.append("g")
     .attr("class", "x axis")
@@ -271,7 +269,7 @@ export const vis: GanttViz = {
     .selectAll('text')
     // .style("fill", config.colors[0] ? config.colors[0] : "black")
 
-    .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
+    .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`)
     .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
 
 
@@ -282,7 +280,7 @@ export const vis: GanttViz = {
     .selectAll('text')
     .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
 
-    .style("font-family", `${config.bodyStyle || "'Roboto'"}`)
+    .style("font-family", `${config.bodyStyle || "'Noto Sans'"}`)
     .style("text-anchor", `${config.rotateY ? "middle" : ""}`)
     .attr("transform", `${config.rotateY ? "rotate(-90) translate(7.5, -15)" : ""}`);
   }
@@ -375,7 +373,7 @@ export const vis: GanttViz = {
       .style("padding", "5px") // Add padding to tooltip
       .style("border", "1px solid #ccc") // Add border to tooltip
       .style("border-radius", "4px") // Add border radius to tooltip
-      .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
+      .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`)
       .style("font-size", "14px");
 
     svg.selectAll(".bar")
@@ -440,15 +438,16 @@ export const vis: GanttViz = {
           .style("opacity", 0);
       });
 
-console.log(config.moveLegend)
 
-const makeNumber = Number(config.moveLegend)
+const makeNumber = Number(config.moveLegend) || 38
+
+
     // Add legend
     const legend = svg.append("g")
       .attr("class", "legend")
 
       .attr("transform", `translate(0, ${height + makeNumber})`)
-      .style('font-family', `${config.bodyStyle || "'Roboto'"}`) // Add font-family
+      .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`) // Add font-family
       .style("font-size", legendFontSize); // Add font-size
 
     // Add range colors to legend
@@ -500,7 +499,7 @@ const makeNumber = Number(config.moveLegend)
         .attr("height", config.changeCircleSize ? config.changeCircleSize : 12)
         .attr("fill", color)
         .attr("radius", 3)
-          .attr("rx", config.square ? 0 : 50)
+        .attr("rx", config.square ? 0 : 50)
         .attr("ry", 50)
 
       // Add pattern rectangle if pattern is not 'Solid'
@@ -522,7 +521,7 @@ const makeNumber = Number(config.moveLegend)
 
         .text(value)
         .style("font-size", legendFontSize)
-        .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
+        .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`)
 
       // Adjust spacing based on text width
       const textWidth = text?.node()?.getBBox()?.width ?? 120;
