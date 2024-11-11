@@ -322,12 +322,9 @@ looker.plugins.visualizations.add({
       let lastIndex = queryResponse.pivots.length - 1;
 
       queryResponse.pivots.forEach((pivot, index) => {
-        const indexWidth = `resize_${index}`;
-        console.log(indexWidth, "indexWidth 1");
-
+        const indexWidth = `resize_${index}`; 
         const pivotWidth = `resize_${lastIndex + index + 2}`;
 
-        console.log(pivotWidth, "pivotWodth", pivot.key);
 
         if (!options[pivotWidth]) {
           options[pivotWidth] = {

@@ -250,7 +250,6 @@ function Table({ columns, data, config }) {
   // console.log("config----------------------------------------", config, columns);
 const colors = config.headerColor[0]
 
-console.log(colors)
   return (
     <>
       <div
