@@ -1,7 +1,7 @@
 import { Looker, VisualizationDefinition } from "../common/types";
 import * as d3 from 'd3';
 import { ganttOptions } from '../common/ganttOptions';
-
+import "./styles.css";
 declare var looker: Looker;
 
 interface GanttViz extends VisualizationDefinition {
@@ -22,9 +22,12 @@ export const vis: GanttViz = {
     element.className = "d3-gantt-vis";
     const style = document.createElement('style');
     style.innerHTML = `
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
     .d3-gantt-vis {
-      font-family: 'Source Sans Pro', sans-serif;
+      font-family:${config.bodyStyle ? config.bodyStyle : "'Roboto'"}
     }
+
   `;
     document.head.appendChild(style);
   },
@@ -41,15 +44,14 @@ export const vis: GanttViz = {
       this.options[option].values = dimensionOptions;
     });
 
-    console.log('optins to set', optionsToSet)
-    console.log('all options', this.options)
+      // console.log('optins to set', optionsToSet)
+      // console.log('all options',this.options)
     const colorCategory = config.colorCategory;
     if (!colorCategory) {
       // @ts-ignore
       this.trigger && this.trigger("registerOptions", this.options);
-      return
-    }
-    console.log('colorCategory', colorCategory);
+      return}
+    // console.log('colorCategory', colorCategory);
     const colorCategoryValues = data.map(row => row[colorCategory].value).filter((value, index, self) => self.indexOf(value) === index);
     colorCategoryValues.forEach((value, index) => {
       this.options[`colorFor${value}`] = {
@@ -86,6 +88,8 @@ export const vis: GanttViz = {
     const titleColumn = config.titleColumn || dimensions[0].name;
     const title = data[0][titleColumn].value || config.chartTitle || "Gantt Chart";
     const legendFontSize = config.legendFontSize || 12;
+    const yAxis = config.toolOffY;
+
 
     const getColor = (category: string) => {
       return config[`colorFor${category}`] || 'black';
@@ -137,9 +141,10 @@ export const vis: GanttViz = {
     const tempSvg = d3.select('body').append('svg');
     const tempText = tempSvg.append('text')
       .attr('class', 'temp-text')
-      .style('font-family', "'Source Sans Pro', sans-serif")
-      .style('font-size', '14px')
+      .style("fill", config.titleColor ? config.titleColor : "#000000")
+      .style('font-size', '10px')
       .text(longestLabel);
+
     const labelWidth = tempText.node()?.getBBox().width || 0;
     tempSvg.remove();
 
@@ -147,19 +152,23 @@ export const vis: GanttViz = {
     const tempTitleSvg = d3.select('body').append('svg');
     const tempTitleText = tempTitleSvg.append('text')
       .attr('class', 'temp-text')
-      .style('font-family', config.titleFontFamily || "'Source Sans Pro', sans-serif")
-      .style('font-size', `${config.titleSize || 20}px`)
-      .style('font-weight', config.titleWeight || 'bold')
-      .style('fill', config.titleColor || 'black')
+      .style("fill", config.titleColor ? config.titleColor : "#000000")
+      .style('font-size', `${config.titleSize || 18}px`)
+      .style('font-weight', `${config.weightTitle || "300"}`)
       .text(title);
     const titleHeight = tempTitleText.node()?.getBBox().height || 0;
+
+    tempText.style('font-family', `${config.bodyStyle || "'Roboto'"}`);
     tempTitleSvg.remove();
 
+
+    const additionalWidth = `${config.rotateY ? 5 : 25 }`
+    console.log(additionalWidth, "additionalWidth")
     // Set up SVG container
-    const margin = { top: titleHeight + 10, right: 10, bottom: 50, left: labelWidth + 10 }; // Add some padding to the label width
+    const margin = { top: titleHeight + 6, right: 12, bottom: 60, left: labelWidth + 25}; // Add some padding to the label width
     // const margin = { top: 34, right: 10, bottom: 38, left: labelWidth + 10 }; // Add some padding to the label width
     const width = element.clientWidth - margin.left - margin.right;
-    const height = element.clientHeight - margin.top - margin.bottom + 4;
+    const height = element.clientHeight - margin.top - margin.bottom + 15;
 
     const svg = d3.select(element)
       .append("svg")
@@ -170,17 +179,19 @@ export const vis: GanttViz = {
 
     svg.append("text")
       .attr("x", width / 2)
-      .attr("y", -margin.top / 2)
+      .attr("y", -margin.top / 4)
       .attr("text-anchor", "middle")
-      .style('font-family', config.titleFontFamily || "'Source Sans Pro', sans-serif")
-      .style('font-size', `${config.titleSize || 20}px`)
-      .style('font-weight', config.titleWeight || 'bold')
-      .style('fill', config.titleColor || 'black')
+      .style("fill", config.titleColor ? config.titleColor: "#000")
+      .style("font-size", `${config.titleSize || 18}px`)
+      .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
+      .style('font-weight', `${config.weightTitle || "300"}`)
+      // .style("color", config.colors[0] ? config.colors[0] : "black")
       .text(title);
 
     const defs = svg.append("defs");
 
     defs.append("pattern")
+
       .attr("id", "crosshatch")
       .attr("patternUnits", "userSpaceOnUse")
       .attr("width", 10)
@@ -244,44 +255,37 @@ export const vis: GanttViz = {
       .range([0, height])
       .padding(config.rowPaddingPercentage ? config.rowPaddingPercentage / 100 : 0.1); // Use the padding percentage from config
 
-    // Define custom time format for military time without leading zeros  
+    // Define custom time format for military time without leading zeros
     const customTimeFormat = d3.timeFormat("%-I:%M %p");
 
 
+    // Define custom time format for military time without leading zeros
+    const customTimeFormat = d3.timeFormat("%-H:%M");
+
     // Add axes
     svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", `translate(0,${height})`)
-      // @ts-ignore
-      .call(d3.axisBottom(x)
-        .ticks(config.xAxisTickCount || 10)
-        .tickSize(0)
-        // @ts-ignore
-        .tickFormat(d3.timeFormat("%-I %p"))
-      )
-      .selectAll('text')
-      .style("font-family", config.xAxisFontFamily || "'Source Sans Pro', sans-serif")
-      .style("font-size", config.xAxisLabelSize || "14px")
-      .attr("dy", "1.5em"); // Shift labels down
+    .attr("class", "x axis")
+    .attr("transform", `translate(0,${height})`)
+    // @ts-ignore
+    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%-H:%M")).tickSizeOuter(0))
+    .selectAll('text')
+    // .style("fill", config.colors[0] ? config.colors[0] : "black")
 
-    // Change x-axis line color
-    svg.selectAll(".x.axis path")
-      .style("stroke", config.xAxisLineColor || 'lightgray');
+    .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
+    .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
 
-    // Conditionally render y-axis ticks
+
+    if (!yAxis) {
     svg.append("g")
-      .attr("class", "y axis")
-      .call(d3.axisLeft(y).tickSize(0))
-      .selectAll("text")
-      .style("font-family", config.yAxisFontFamily || "'Source Sans Pro', sans-serif")
-      .style("font-size", config.yAxisLabelSize || "14px")
-      .style("color", config.yAxisLabelColor || "black");
+    .attr("class", "y axis")
+    .call(d3.axisLeft(y).tickSizeOuter(0))
+    .selectAll('text')
+    .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
 
-    // Conditionally render y-axis line
-    if (config.removeYAxis) {
-      svg.selectAll(".y.axis path")
-        .style("stroke", "none"); // Hide y-axis line
-    }
+    .style("font-family", `${config.bodyStyle || "'Roboto'"}`)
+    .style("text-anchor", `${config.rotateY ? "middle" : ""}`)
+    .attr("transform", `${config.rotateY ? "rotate(-90) translate(7.5, -15)" : ""}`);
+  }
 
     // Draw range bands
     svg.append("rect")
@@ -290,6 +294,7 @@ export const vis: GanttViz = {
       .attr("y", 0)
       .attr("width", x(new Date(refBands.refBand1End)) - x(new Date(refBands.refBand1Start)))
       .attr("height", height)
+
       .attr("fill", (d: any) => {
         return config.refBand1Color || "rgba(68, 170, 213, 0.1)";
       });
@@ -300,6 +305,7 @@ export const vis: GanttViz = {
       .attr("y", 0)
       .attr("width", x(new Date(refBands.refBand2End)) - x(new Date(refBands.refBand2Start)))
       .attr("height", height)
+
       .attr("fill", config.refBand2Color || "rgba(68, 170, 213, 0.1)");
 
     // Add background rectangles for alternating rows
@@ -335,6 +341,7 @@ export const vis: GanttViz = {
       .attr("height", y.bandwidth())
       // allow for color with patterns
       .attr("fill", d => getColor(d[colorCategory].value))
+
       .attr("rx", 3)
       .attr("fill-opacity", d => getPattern(d[colorCategory].value) === 'solid' ? 1 : 1); // Adjust opacity if pattern is used
 
@@ -368,7 +375,7 @@ export const vis: GanttViz = {
       .style("padding", "5px") // Add padding to tooltip
       .style("border", "1px solid #ccc") // Add border to tooltip
       .style("border-radius", "4px") // Add border radius to tooltip
-      .style("font-family", "'Source Sans Pro', sans-serif")
+      .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
       .style("font-size", "14px");
 
     svg.selectAll(".bar")
@@ -391,18 +398,18 @@ export const vis: GanttViz = {
         const pageHeight = window.innerHeight;
         const xOffset = 10;
         const yOffset = 10;
-    
+
         let left = event.pageX + xOffset;
         let top = event.pageY + yOffset;
-    
+
         if (event.pageX + tooltipWidth + xOffset > pageWidth) {
           left = event.pageX - tooltipWidth - xOffset;
         }
-    
+
         if (event.pageY + tooltipHeight + yOffset > pageHeight) {
           top = event.pageY - tooltipHeight - yOffset;
         }
-    
+
         tooltip.style("left", `${left}px`)
           .style("top", `${top}px`);
       })
@@ -433,11 +440,15 @@ export const vis: GanttViz = {
           .style("opacity", 0);
       });
 
+console.log(config.moveLegend)
+
+const makeNumber = Number(config.moveLegend)
     // Add legend
     const legend = svg.append("g")
       .attr("class", "legend")
-      .attr("transform", `translate(0, ${height + 20})`)
-      .style("font-family", "'Source Sans Pro', sans-serif") // Add font-family
+
+      .attr("transform", `translate(0, ${height + makeNumber})`)
+      .style('font-family', `${config.bodyStyle || "'Roboto'"}`) // Add font-family
       .style("font-size", legendFontSize); // Add font-size
 
     // Add range colors to legend
@@ -450,17 +461,21 @@ export const vis: GanttViz = {
     rangeColors.forEach((range, i) => {
       const legendItem = legend.append("g")
 
+
       legendItem.append("rect")
         .attr("x", 0)
-        .attr("y", 1)
-        .attr("width", 15)
-        .attr("height", 15)
+        .attr("y", config.moveLegendCircle ? -`${config.moveLegendCircle}` : 0)
+        .attr("width", config.changeCircleSize ? config.changeCircleSize : 12)
+        .attr("height", config.changeCircleSize ? config.changeCircleSize : 12)
         .attr("fill", range.color)
-        .attr("radius", 3);
+        .attr("radius", 3)
+        .attr("rx", config.square ? 0 : 50)
+        .attr("ry", 50)
+
 
       const text = legendItem.append("text")
-        .attr("x", 30)
-        .attr("y", 15)
+        .attr("x", 22)
+        .attr("y", 10)
         .text(range.label)
         .style("font-size", legendFontSize);
 
@@ -480,34 +495,34 @@ export const vis: GanttViz = {
 
       legendItem.append("rect")
         .attr("x", 0)
-        .attr("y", 1)
-        .attr("width", 15)
-        .attr("height", 15)
+        .attr("y", config.moveLegendCircle ? -`${config.moveLegendCircle}` : 0)
+        .attr("width", config.changeCircleSize ? config.changeCircleSize : 12)
+        .attr("height", config.changeCircleSize ? config.changeCircleSize : 12)
         .attr("fill", color)
-        .attr("radius", 3);
+        .attr("radius", 3)
+          .attr("rx", config.square ? 0 : 50)
+        .attr("ry", 50)
 
       // Add pattern rectangle if pattern is not 'Solid'
       if (pattern !== 'Solid') {
         legendItem.append("rect")
           .attr("x", 0)
-          .attr("y", 1)
-          .attr("width", 15)
-          .attr("height", 15)
+          .attr("y", config.moveLegendCircle ? -`${config.moveLegendCircle}` : 0)
+          .attr("width", config.changeCircleSize ? config.changeCircleSize : 12)
+          .attr("height", config.changeCircleSize ? config.changeCircleSize : 12)
           .attr("fill", fill)
+          .attr("rx", config.square ? 0 : 50)
+          .attr("ry", 50)
           .attr("fill-opacity", 0.5); // Adjust opacity to show both color and pattern
       }
 
       const text = legendItem.append("text")
-        .attr("x", 30)
-        .attr("y", 15)
+        .attr("x", 20)
+        .attr("y", 10)
+
         .text(value)
         .style("font-size", legendFontSize)
-        .style("font-family", "'Source Sans Pro', sans-serif");
-
-        
-        // Adjust legend position
-      svg.selectAll(".legend")
-        .attr("transform", `translate(0, ${height + margin.bottom - 17})`); // Adjusted legend position
+        .style('font-family', `${config.bodyStyle || "'Roboto'"}`)
 
       // Adjust spacing based on text width
       const textWidth = text?.node()?.getBBox()?.width ?? 120;
@@ -518,12 +533,24 @@ export const vis: GanttViz = {
     const totalLegendWidth = legendItems.reduce((acc, item) => acc + item.width, 0);
 
     // Calculate starting x position to center legend items
-    const startX = (width - totalLegendWidth) / 2;
+    var legendCenter = (width - totalLegendWidth) / 2;
+
+    var legendLeft = 0;
+
+    var legendRight = (width - totalLegendWidth)
+
+
 
     // Position legend items
-    let currentX = startX;
+    let currentX =
+    config.legendPosition === "legendCenter" ? legendCenter :
+    config.legendPosition === "legendLeft" ? legendLeft:
+    config.legendPosition === "legendRight" ? legendRight:
+    legendCenter
+
+
     legendItems.forEach(item => {
-      item.element.attr("transform", `translate(${currentX}, 0)`);
+      item.element.attr("transform", `translate(${currentX})`);
       currentX += item.width;
     });
     done()
