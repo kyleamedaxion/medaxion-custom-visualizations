@@ -1,7 +1,82 @@
 import { arrayBuffer } from "stream/consumers";
 
 export const ganttOptions = {
-
+    removeYAxis: {
+        type: "boolean",
+        label: "Remove Y Axis",
+        display: "checkbox",
+        default: false,
+        section: "Axes",
+    },
+    xAxisLineColor: {
+        type: "string",
+        label: "X Axis Line Color",
+        display: "color",
+        default: "lightgray",
+        section: "Axes",
+    },
+    xAxisLabelColor: {
+        type: "string",
+        label: "X Axis Label Color",
+        display: "color",
+        default: "#2C2D33",
+        section: "Axes",
+    },
+    xAxisLabelSize: {
+        type: "string",
+        label: "X Axis Label Size",
+        display: "text",
+        default: "12",
+        section: "Axes",
+    },
+    xAxisTickCount: {
+        type: "number",
+        label: "X Axis Tick Count",
+        display: "range",
+        min: 1,
+        max: 20,
+        step: 1,
+        default: 10,
+        section: "Axes",
+    },
+    xAxisFontFamily: {
+        type: "string",
+        label: "X Axis Font Family",
+        display: "text",
+        default: '"Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
+        section: "Axes",
+    },
+    yAxisLabelColor: {
+        type: "string",
+        label: "Y Axis Label Color",
+        display: "color",
+        default: "lightgray",
+        section: "Axes",
+    },
+    yAxisLabelSize: {
+        type: "string",
+        label: "Y Axis Label Size",
+        display: "text",
+        default: "12",
+        section: "Axes",
+    },
+    yAxisFontFamily: {
+        type: "string",
+        label: "Y Axis Font Family",
+        display: "text",
+        default: '"Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
+        section: "Axes",
+    },
+    rowPaddingPercentage: {
+        type: "number",
+        label: "Row Padding Percentage",
+        display: "range",
+        min: 0,
+        max: 100,
+        step: 1,
+        default: 10,
+        section: "Style",
+    },
     titleColumn: {
         type: "string",
         label: "Title Column",
@@ -24,6 +99,27 @@ export const ganttOptions = {
         section: "Style",
         default: "18",
         order:3
+    },
+    titleFontFamily: {
+        type: "string",
+        label: "Title Font Family",
+        display: "text",
+        default: '"Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
+        section: "Style",
+    },
+    titleWeight: {
+        type: "string",
+        label: "Title Weight",
+        display: "text",
+        default: "400",
+        section: "Style",
+    },
+    titleColor: {
+        type: "string",
+        label: "Title Color",
+        display: "color",
+        default: "#2C2D33",
+        section: "Style",
     },
     alternateRowColor: {
         type: "array",

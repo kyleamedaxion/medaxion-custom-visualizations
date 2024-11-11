@@ -1,8 +1,4 @@
 import { Looker, VisualizationDefinition } from "../common/types";
-import {
-  handleErrors,
-  processQueryResponse,
-} from "../common/utils";
 import * as d3 from 'd3';
 import { ganttOptions } from '../common/ganttOptions';
 import "./styles.css";
@@ -36,19 +32,6 @@ export const vis: GanttViz = {
     document.head.appendChild(style);
   },
   updateAsync(data, element, config, queryResponse, details, done) {
-
-    // const isOK: boolean = handleErrors(this, queryResponse, {
-    //   min_pivots: 0,
-    //   max_pivots: 0,
-    //   min_dimensions: 10,
-    //   max_dimensions: 10,
-    //   min_measures: 0,
-    //   max_measures: 0,
-    // });
-    // if (!isOK) {
-    //   done()
-    //   return;
-    // }
 
     const { dimension_like: dimensions } = queryResponse.fields;
 
@@ -270,7 +253,10 @@ export const vis: GanttViz = {
     const y = d3.scaleBand()
       .domain(categories)
       .range([0, height])
-      .padding(0.1);
+      .padding(config.rowPaddingPercentage ? config.rowPaddingPercentage / 100 : 0.1); // Use the padding percentage from config
+
+    // Define custom time format for military time without leading zeros
+    const customTimeFormat = d3.timeFormat("%-I:%M %p");
 
 
     // Define custom time format for military time without leading zeros
@@ -398,14 +384,34 @@ export const vis: GanttViz = {
           .duration(200)
           .style("opacity", .9);
         tooltip.html(`
-          <b>${config.yAxisCategories}: ${d[nameDim].value}</b><br/>
-          <b>Category:</b> <span style="color: ${getColor(d[colorCategory].value)};">${d[colorCategory].value}</span><br/>
           <b>Start:</b> ${d[startDim].value}<br/>
           <b>End:</b> ${d[endDim].value}<br/>
-          <b>Duration:</b> ${Math.floor((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) / 3600000)} hours ${Math.floor(((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) % 3600000) / 60000)} minutes
+          <b>Duration:</b> ${Math.floor((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) / 3600000)}:${Math.floor(((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) % 3600000) / 60000)} minutes
         `)
           .style("left", (event.pageX + 5) + "px")
           .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mousemove", function (event) {
+        const tooltipWidth = tooltip?.node()?.offsetWidth || 100;
+        const tooltipHeight = tooltip?.node()?.offsetHeight || 100;
+        const pageWidth = window.innerWidth;
+        const pageHeight = window.innerHeight;
+        const xOffset = 10;
+        const yOffset = 10;
+
+        let left = event.pageX + xOffset;
+        let top = event.pageY + yOffset;
+
+        if (event.pageX + tooltipWidth + xOffset > pageWidth) {
+          left = event.pageX - tooltipWidth - xOffset;
+        }
+
+        if (event.pageY + tooltipHeight + yOffset > pageHeight) {
+          top = event.pageY - tooltipHeight - yOffset;
+        }
+
+        tooltip.style("left", `${left}px`)
+          .style("top", `${top}px`);
       })
       .on("mouseout", function (d) {
         tooltip.transition()
