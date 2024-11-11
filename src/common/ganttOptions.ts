@@ -39,13 +39,13 @@ export const ganttOptions = {
         default: 10,
         section: "Axes",
     },
-    xAxisFontFamily: {
-        type: "string",
-        label: "X Axis Font Family",
-        display: "text",
-        default: '"Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
-        section: "Axes",
-    },
+    // xAxisFontFamily: {
+    //     type: "string",
+    //     label: "X Axis Font Family",
+    //     display: "text",
+    //     default: '"Roboto" , "Open Sans", "Montserrat", "Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
+    //     section: "Axes",
+    // },
     yAxisLabelColor: {
         type: "string",
         label: "Y Axis Label Color",
@@ -60,13 +60,13 @@ export const ganttOptions = {
         default: "12",
         section: "Axes",
     },
-    yAxisFontFamily: {
-        type: "string",
-        label: "Y Axis Font Family",
-        display: "text",
-        default: '"Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
-        section: "Axes",
-    },
+    // yAxisFontFamily: {
+    //     type: "string",
+    //     label: "Y Axis Font Family",
+    //     display: "text",
+    //     default: '"Roboto" , "Open Sans", "Montserrat", "Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
+    //     section: "Axes",
+    // },
     rowPaddingPercentage: {
         type: "number",
         label: "Row Padding Percentage",
@@ -98,15 +98,16 @@ export const ganttOptions = {
         display: "text",
         section: "Style",
         default: "18",
+        placeholder:"18",
         order:3
     },
-    titleFontFamily: {
-        type: "string",
-        label: "Title Font Family",
-        display: "text",
-        default: '"Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
-        section: "Style",
-    },
+    // titleFontFamily: {
+    //     type: "string",
+    //     label: "Title Font Family",
+    //     display: "text",
+    //     default: '"Roboto" , "Open Sans", "Montserrat", "Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
+    //     section: "Style",
+    // },
     titleWeight: {
         type: "string",
         label: "Title Weight",
@@ -114,20 +115,20 @@ export const ganttOptions = {
         default: "400",
         section: "Style",
     },
-    titleColor: {
-        type: "string",
-        label: "Title Color",
-        display: "color",
-        default: "#2C2D33",
-        section: "Style",
-    },
-    alternateRowColor: {
-        type: "array",
-        label: "Alternate Row Color",
-        display: "color",
-        section: "Style",
-        order:4
-    },
+    // titleColor: {
+    //     type: "string",
+    //     label: "Title Color",
+    //     display: "color",
+    //     default: "#2C2D33",
+    //     section: "Style",
+    // },
+    // alternateRowColor: {
+    //     type: "array",
+    //     label: "Alternate Row Color",
+    //     display: "color",
+    //     section: "Style",
+    //     order:4
+    // },
     yAxisCategories: {
         type: "array",
         label: "Y-Axis Categories",
@@ -242,20 +243,20 @@ export const ganttOptions = {
     },
     bodyStyle: {
       type: "string",
-      label: "Choose Font",
+      label: "Choose Font for Viz",
       display: "select",
-      values: [{ "Roboto": "'Roboto'" } , { "Open Sans": "'Open Sans'" }, {"Montserrat" : "'Montserrat'"}],
+      values: [{"Noto Sans" :"'Noto Sans'"},{ "Roboto": "'Roboto'" } , { "Open Sans": "'Open Sans'" }, {"Montserrat" : "'Montserrat'"}],
       section: "Style",
-      default: "'Roboto', sans-serif;",
+      default: "'Noto Sans', sans-serif",
       order:12
 
     },
     weightTitle: {
       type: "string",
        label: "Font Weight Title",
-       default: "300",
+       default: "400",
        display: "text",
-       placeholder: "300",
+       placeholder: "400",
        section: "Style",
        order:13
 
@@ -345,6 +346,13 @@ export const ganttOptions = {
          order: 21,
          section: "Style",
        },
+       alternateRowColor: {
+        type: "array",
+        label: "Alternate Row Color",
+
+        display: "text",
+        section: "Axes",
+    },
 
     // colors: {
     //   type: 'array',
