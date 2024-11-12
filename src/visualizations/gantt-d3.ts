@@ -250,7 +250,8 @@ export const vis: GanttViz = {
         d3.min(data, d => d[startDim].value ? new Date(d[startDim].value) : null),
         d3.max(data, d => d[endDim].value ? new Date(d[endDim].value) : null)
       ].filter(d => d !== null) as Date[])
-      .range([0, width]);
+      .range([0, width])
+      ;
 
     const y = d3.scaleBand()
       .domain(categories)
@@ -265,24 +266,44 @@ export const vis: GanttViz = {
     .attr("class", "x axis")
     .attr("transform", `translate(0,${height})`)
     // @ts-ignore
-    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%-H:%M")).tickSizeOuter(0))
+    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%-H:%M")).tickSizeOuter(0).ticks(config.xAxisTickCount || 10))
     .selectAll('text')
-    // .style("fill", config.colors[0] ? config.colors[0] : "black")
-
+    // .style("fill", config.colors[0] ? config.colors[0] : "black") 
     .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`)
     .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
+    .style("stroke", config.xAxisLineColor || 'lightgray');
 
 
-    if (!yAxis) {
-    svg.append("g")
-    .attr("class", "y axis")
-    .call(d3.axisLeft(y).tickSizeOuter(0))
-    .selectAll('text')
-    .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
+    svg.selectAll(".x.axis path")
+      .style("stroke", config.xAxisLineColor || 'lightgray');
 
-    .style("font-family", `${config.bodyStyle || "'Noto Sans'"}`)
-    .style("text-anchor", `${config.rotateY ? "middle" : ""}`)
-    .attr("transform", `${config.rotateY ? "rotate(-90) translate(7.5, -15)" : ""}`);
+  //   if (!yAxis) {
+  //   svg.append("g")
+  //     .attr("class", "y axis")
+  //     .call(d3.axisLeft(y).tickSizeOuter(0))
+  //     .selectAll('text')
+  //     .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
+
+  //     .style("font-family", `${config.bodyStyle || "'Noto Sans'"}`)
+  //     .style("text-anchor", `${config.rotateY ? "middle" : ""}`)
+  //     .attr("transform", `${config.rotateY ? "rotate(-90) translate(7.5, -15)" : ""}`);
+  // }
+  svg.append("g")
+  .attr("class", "y axis")
+  .call(d3.axisLeft(y).tickSize(0))
+  .selectAll("text")
+  .style("font-family", config.bodyStyle || "'Source Sans Pro', sans-serif")
+  .style("font-size", config.axesFontSize || "14px")
+  
+  .style("text-anchor", `${config.rotateY ? "middle" : ""}`)
+  
+  .attr("transform", `${config.rotateY ? "rotate(-90) translate(7.5, -15)" : ""}`)
+  .style("color", config.yAxisLabelColor || "black");
+
+  // Conditionally render y-axis line
+  if (yAxis) {
+    svg.selectAll(".y.axis path")
+      .style("stroke", "none"); // Hide y-axis line
   }
 
     // Draw range bands

@@ -1,32 +1,11 @@
 import { arrayBuffer } from "stream/consumers";
 
 export const ganttOptions = {
-    removeYAxis: {
-        type: "boolean",
-        label: "Remove Y Axis",
-        display: "checkbox",
-        default: false,
-        section: "Axes",
-    },
     xAxisLineColor: {
         type: "string",
         label: "X Axis Line Color",
         display: "color",
         default: "lightgray",
-        section: "Axes",
-    },
-    xAxisLabelColor: {
-        type: "string",
-        label: "X Axis Label Color",
-        display: "color",
-        default: "#2C2D33",
-        section: "Axes",
-    },
-    xAxisLabelSize: {
-        type: "string",
-        label: "X Axis Label Size",
-        display: "text",
-        default: "12",
         section: "Axes",
     },
     xAxisTickCount: {
@@ -39,25 +18,11 @@ export const ganttOptions = {
         default: 10,
         section: "Axes",
     },
-    // xAxisFontFamily: {
-    //     type: "string",
-    //     label: "X Axis Font Family",
-    //     display: "text",
-    //     default: '"Roboto" , "Open Sans", "Montserrat", "Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
-    //     section: "Axes",
-    // },
     yAxisLabelColor: {
         type: "string",
         label: "Y Axis Label Color",
         display: "color",
         default: "lightgray",
-        section: "Axes",
-    },
-    yAxisLabelSize: {
-        type: "string",
-        label: "Y Axis Label Size",
-        display: "text",
-        default: "12",
         section: "Axes",
     },
     // yAxisFontFamily: {
@@ -346,13 +311,7 @@ export const ganttOptions = {
          order: 21,
          section: "Style",
        },
-       alternateRowColor: {
-        type: "array",
-        label: "Alternate Row Color",
 
-        display: "text",
-        section: "Axes",
-    },
 
     // colors: {
     //   type: 'array',
