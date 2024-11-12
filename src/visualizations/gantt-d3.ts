@@ -268,7 +268,7 @@ export const vis: GanttViz = {
     // @ts-ignore
     .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%-H:%M")).tickSizeOuter(0).ticks(config.xAxisTickCount || 10))
     .selectAll('text')
-    // .style("fill", config.colors[0] ? config.colors[0] : "black") 
+    .style("font-weight", "100")
     .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`)
     .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
     .style("stroke", config.xAxisLineColor || 'lightgray');
@@ -293,10 +293,10 @@ export const vis: GanttViz = {
   .call(d3.axisLeft(y).tickSize(0))
   .selectAll("text")
   .style("font-family", config.bodyStyle || "'Source Sans Pro', sans-serif")
-  .style("font-size", config.axesFontSize || "14px")
-  
+  .style("font-size", config.axesFontSize || "10px")
+
   .style("text-anchor", `${config.rotateY ? "middle" : ""}`)
-  
+
   .attr("transform", `${config.rotateY ? "rotate(-90) translate(7.5, -15)" : ""}`)
   .style("color", config.yAxisLabelColor || "black");
 

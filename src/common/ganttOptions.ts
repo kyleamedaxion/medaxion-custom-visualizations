@@ -25,13 +25,7 @@ export const ganttOptions = {
         default: "lightgray",
         section: "Axes",
     },
-    // yAxisFontFamily: {
-    //     type: "string",
-    //     label: "Y Axis Font Family",
-    //     display: "text",
-    //     default: '"Roboto" , "Open Sans", "Montserrat", "Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
-    //     section: "Axes",
-    // },
+
     rowPaddingPercentage: {
         type: "number",
         label: "Row Padding Percentage",
@@ -66,34 +60,7 @@ export const ganttOptions = {
         placeholder:"18",
         order:3
     },
-    // titleFontFamily: {
-    //     type: "string",
-    //     label: "Title Font Family",
-    //     display: "text",
-    //     default: '"Roboto" , "Open Sans", "Montserrat", "Google Sans", "Noto Sans", "Noto Sans JP", "Noto Sans CJK KR", "Noto Sans Arabic UI", "Noto Sans Devanagari UI", "Noto Sans Hebrew", "Noto Sans Thai UI", Helvetica, Arial, sans-serif',
-    //     section: "Style",
-    // },
-    titleWeight: {
-        type: "string",
-        label: "Title Weight",
-        display: "text",
-        default: "400",
-        section: "Style",
-    },
-    // titleColor: {
-    //     type: "string",
-    //     label: "Title Color",
-    //     display: "color",
-    //     default: "#2C2D33",
-    //     section: "Style",
-    // },
-    // alternateRowColor: {
-    //     type: "array",
-    //     label: "Alternate Row Color",
-    //     display: "color",
-    //     section: "Style",
-    //     order:4
-    // },
+
     yAxisCategories: {
         type: "array",
         label: "Y-Axis Categories",
@@ -203,7 +170,7 @@ export const ganttOptions = {
       type: "boolean",
       label: "Turn off Y Axis",
       default: false,
-      section: "Style",
+      section: "Axes",
       order:11
     },
     bodyStyle: {
@@ -231,7 +198,7 @@ export const ganttOptions = {
       type: "boolean",
       label: "Rotate Y Axis Vertical",
       default: false,
-      section: "Style",
+      section: "Axes",
       order:14
     },
 
@@ -311,17 +278,6 @@ export const ganttOptions = {
          order: 21,
          section: "Style",
        },
-
-
-    // colors: {
-    //   type: 'array',
-    //   label: 'Choose Color',
-    //   display: 'colors',
-    //   default: ["#000000", "#FFEC16", "#0066FF", "#12d465", "#FF3FED", "#6FFFF0", "#e22bb7", "#6fd0e9", "#ffda00", "#0066ff", "#0dcaf0", "#4ae06d", "#e34fbc", "#b55ae6", "#65ff4b"],
-    //   order: 19,
-    //   section: "Style",
-    // },
-
 
 
 
