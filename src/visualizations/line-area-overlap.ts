@@ -289,11 +289,13 @@ const vis: LineAreaOverlapViz = {
   // Set up the initial state of the visualization
   create(element, config) {
     element.className = "highcharts-custom-vis";
+    element.style.marginBottom = "0"; // Remove the 10px margin-bottom
 
   },
   // Render in response to the data or settings changing
   update(data, element, config, queryResponse) {
 
+    
     // Expect 1 time series dimension and 3 or more measures
     const errors = handleErrors(this, queryResponse, {
       min_pivots: 0,
@@ -536,7 +538,7 @@ const vis: LineAreaOverlapViz = {
             fontSize: config.axisFontSize || '12px',
             color: config.axisFontColor || '#2C2D33'
           },
-          y: 20,
+          y: 15,
           enabled: true,
           formatter: function () {
             return Highcharts.dateFormat('%H:%M', Number(this.value));
@@ -567,7 +569,7 @@ const vis: LineAreaOverlapViz = {
           fontSize: config.legendFontSize || '12px',
           color: config.legendFontColor || '#2C2D33'
         },
-        y: 23,
+        y: 18,
         align: config.legendAlign || 'center', // Dynamic horizontal alignment
         verticalAlign: config.legendVerticalAlign || 'bottom', // Dynamic vertical alignment
         layout: (config.legendAlign === 'right' && config.legendVerticalAlign === 'middle') ? 'vertical' : 'horizontal', // Set layout to vertical if legend is center-right

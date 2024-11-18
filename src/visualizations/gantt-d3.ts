@@ -266,7 +266,7 @@ export const vis: GanttViz = {
     .attr("class", "x axis")
     .attr("transform", `translate(0,${height})`)
     // @ts-ignore
-    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%-H:%M")).tickSizeOuter(0).ticks(config.xAxisTickCount || 10))
+    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%-H:%M")).tickSize(0).ticks(config.xAxisTickCount || 10))
     .selectAll('text')
     .style("font-weight", "100")
     .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`)
@@ -384,6 +384,8 @@ export const vis: GanttViz = {
       .attr("height", y.bandwidth())
       .attr("fill", d => `url(#${getPattern(d[colorCategory].value)})`);
 
+    // Define time format
+    const timeFormat = d3.timeFormat("%H:%M");
 
     // Add tooltips
     const tooltip = d3.select("body").append("div")
@@ -403,9 +405,9 @@ export const vis: GanttViz = {
           .duration(200)
           .style("opacity", .9);
         tooltip.html(`
-          <b>Start:</b> ${d[startDim].value}<br/>
-          <b>End:</b> ${d[endDim].value}<br/>
-          <b>Duration:</b> ${Math.floor((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) / 3600000)}:${Math.floor(((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) % 3600000) / 60000)} minutes
+          <b>Start:</b> ${timeFormat(new Date(d[startDim].value))}<br/>
+          <b>End:</b> ${timeFormat(new Date(d[endDim].value))}<br/>
+          <b>Duration:</b> ${Math.floor((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) / 3600000)}:${Math.floor(((new Date(d[endDim].value).getTime() - new Date(d[startDim].value).getTime()) % 3600000) / 60000)}
         `)
           .style("left", (event.pageX + 5) + "px")
           .style("top", (event.pageY - 28) + "px");
@@ -479,6 +481,7 @@ const makeNumber = Number(config.moveLegend) || 38
 
     const legendItems: LegendItem[] = []
     rangeColors.forEach((range, i) => {
+      if (range.label){
       const legendItem = legend.append("g")
 
 
@@ -502,7 +505,7 @@ const makeNumber = Number(config.moveLegend) || 38
       const textWidth = text?.node()?.getBBox()?.width ?? 120;
 
       legendItems.push({ element: legendItem, width: textWidth + 50 }); // Store element and its width
-
+      }
     });
 
     // Add colorCategoryValues to legend
