@@ -4,42 +4,40 @@ import { useTable, useFlexLayout, useResizeColumns, useSortBy } from "react-tabl
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
+
 // Function to generate CSS for column borders
 const generateColumnBordersCSS = (columnBorders) => {
   if (!columnBorders) return "";
 
   const columns = columnBorders.split(",").map(Number);
 
-  return columns
-    .map(
-      (col) => `
-    thead > tr:last-child > th:nth-child(${col}) {
-      border-right: 3px solid #ddd; /* Adjust the border style and color as needed */
-    }
-    tbody td:nth-child(${col}) {
-      border-right: 3px solid #ddd; /* Adjust the border style and color as needed */
-    }
-    `
-    )
-    .join("\n");
+  return columns.map(col => `
+  thead > tr:last-child > th:nth-child(${col}) {
+    border-right: 3px solid #ddd; /* Adjust the border style and color as needed */
+  }
+      tbody td:nth-child(${col}) {
+        border-right: 3px solid #ddd; /* Adjust the border style and color as needed */
+      }
+    `).join("\n");
 };
+
 
 // Function to generate CSS for row borders
 const generateRowBordersCSS = (rowBorders, rowCount) => {
   if (!rowBorders) return "";
 
   const rows = rowBorders.split(",").map(Number);
-  return rows
-    .map((row) => {
-      const actualRow = row < 0 ? rowCount + row + 1 : row;
-      return `
+  return rows.map(row => {
+    const actualRow = row < 0 ? rowCount + row + 1 : row;
+    return `
       tbody tr:nth-child(${actualRow}) {
         border-bottom: 3px solid #ddd; /* Adjust the border style and color as needed */
       }
-      `;
-    })
-    .join("\n");
+    `;
+  }).join("\n");
 };
+
+
 
 const Styles = ({ children, config, rowCount }) => {
   const {
@@ -63,21 +61,15 @@ const Styles = ({ children, config, rowCount }) => {
     headBorder,
     stripe,
     headerFontColor,
+    verticalStripe
   } = config;
 
-  const columnBordersCSS = useMemo(
-    () => generateColumnBordersCSS(borderBetweenColumns),
-    [borderBetweenColumns]
-  );
-  const rowBordersCSS = useMemo(
-    () => generateRowBordersCSS(borderBetweenRows, rowCount),
-    [borderBetweenRows, rowCount]
-  );
+  const columnBordersCSS = useMemo(() => generateColumnBordersCSS(borderBetweenColumns), [borderBetweenColumns]);
+  const rowBordersCSS = useMemo(() => generateRowBordersCSS(borderBetweenRows, rowCount), [borderBetweenRows, rowCount]);
 
-  console.log()
 
   const StyledWrapper = styled.div`
-    @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+  @import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
 
     #vis-container {
       height: 100%;
@@ -91,36 +83,6 @@ const Styles = ({ children, config, rowCount }) => {
     body {
       font-family: ${bodyStyle};
     }
-    .measure-header {
-      text-align: center;
-      pointer-events: none;
-      cursor: default;
-    }
-
-    .hide-dimension-header {
-      visibility: hidden;
-    }
-    thead > tr > th {
-      ${(props) => props.headerStyles}
-      display: flex;
-      padding-top: 0em!important;
-      padding-bottom: 0em!important
-    }
-    thead {
-      padding-top: 0em !important;
-    }
-    #vis > div > div > table > thead > tr > th:nth-child(1),
-    #vis > div > div > table > thead > tr > th {
-      ${(props) => props.headerStyles}
-      display: flex;
-    }
-    .table > thead {
-      ${(props) => props.headerStyles}
-    }
-    tbody > tr > td {
-      ${(props) => props.rowStyles}
-      vertical-align: middle;
-    }
 
 
     tr:nth-child(odd) td {
@@ -133,7 +95,7 @@ const Styles = ({ children, config, rowCount }) => {
 
     }
     .td {
-      color: ${fontColor ? `${fontColor} !important` : "#212529"};
+      color: ${fontColor ? `${fontColor}` : "#212529"};
       font-weight: ${weightTable ? `${weightTable} !important` : "300"};
       font-size: ${tableFontSize ? `${tableFontSize} !important` : "12px"};
     }
@@ -166,6 +128,48 @@ const Styles = ({ children, config, rowCount }) => {
       word-break: break-all !important;
     }
 
+    .td {
+    border-right: ${verticalStripe ? "1px solid #dedede" : ""}
+   }
+
+    .measure-header {
+      text-align: center;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    .hide-dimension-header {
+      visibility: hidden;
+    }
+    thead > tr > th {
+      ${(props) => props.headerStyles}
+      display: flex;
+      padding-top: 0em!important;
+      padding-bottom: 0em!important
+    }
+    thead {
+      padding-top: 0em !important;
+    }
+    #vis > div > div > table > thead > tr > th:nth-child(1),
+    #vis > div > div > table > thead > tr > th {
+      ${(props) => props.headerStyles}
+      display: flex;
+    }
+    .table > thead {
+      ${(props) => props.headerStyles}
+    }
+    tbody > tr > td {
+      ${(props) => props.rowStyles}
+      vertical-align: middle;
+    }
+
+
+
+    thead th{
+    background: ${config.headerColor ? config.headerColor : "#fff"}
+    }
+
+
     ${(props) => props.columnBordersCSS}
     ${(props) => props.rowBordersCSS}
     ${(props) => props.generalCSS}
@@ -173,6 +177,7 @@ const Styles = ({ children, config, rowCount }) => {
 
   return (
     <StyledWrapper
+      config={config}
       headerStyles={headerStyles}
       rowStyles={rowStyles}
       generalCSS={generalCSS}
@@ -186,18 +191,18 @@ const Styles = ({ children, config, rowCount }) => {
   );
 };
 
+
 function Table({ columns, data, config }) {
-  // var { bodyStyle, fixedHeight, unsetTable, indexWidth } = config;
   const defaultColumn = React.useMemo(
     () => ({
-      minWidth: 10,
-      width: 200,
+      minWidth: 140,
+      width: 140,
       maxWidth: 400,
     }),
     []
   );
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, state, resetResizing, headerColor } =
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow, state, resetResizing } =
     useTable(
       {
         columns,
@@ -210,103 +215,84 @@ function Table({ columns, data, config }) {
       useFlexLayout,
       useResizeColumns
     );
-  // Destructure and copy the headerGroups
-  const [firstHeaderGroup, ...restHeaderGroups] = headerGroups;
-  let newHeaderGroups = headerGroups;
-  // Check config to determine if the first header should be hidden
-  if (config.hideTopHeaderRow) {
-    newHeaderGroups = restHeaderGroups;
-  } else {
-    newHeaderGroups = headerGroups;
-  }
+
+        // Destructure and copy the headerGroups
+        const [firstHeaderGroup, ...restHeaderGroups] = headerGroups;
+        let newHeaderGroups = headerGroups;
+        // Check config to determine if the first header should be hidden
+        if (config.hideTopHeaderRow) {
+         newHeaderGroups = restHeaderGroups;
+        } else {
+          newHeaderGroups = headerGroups
+        }
 
   for (let i = 0; i < newHeaderGroups.length; i++) {
-    const newHeaderGroup = newHeaderGroups[i];
-    for (let j = 0; j < newHeaderGroup.headers.length; j++) {
-      for (let k = j; k < newHeaderGroup.headers.length; k++) {
-        if (newHeaderGroup.headers[j].Header === newHeaderGroup.headers[k].Header) {
-          if (!config[`resize_${j}`]) {
-            config[`resize_${j}`] = config[`resize_${k}`];
-          } else {
-            config[`resize_${k}`] = config[`resize_${j}`];
-          }
+  const newHeaderGroup = newHeaderGroups[i];
+  for (let j = 0; j < newHeaderGroup.headers.length; j++) {
+    for (let k = j; k < newHeaderGroup.headers.length; k++) {
+      if (newHeaderGroup.headers[j].Header === newHeaderGroup.headers[k].Header) {
+        if (!config[`resize_${j}`]) {
+          config[`resize_${j}`] = config[`resize_${k}`];
+        } else {
+          config[`resize_${k}`] = config[`resize_${j}`];
         }
       }
     }
   }
-  // console.log("newHeaderGroups", newHeaderGroups);
-
-  // columns.forEach((column, index) => {
-  //     console.log("config----------------------------------------", config)
-  //     const indexWidth = `resize_${index}`;
-  //     const columnWidth = config[indexWidth];
-  //     // console.log(columnWidth)
-  // });
-
-  // console.log(columns)
-  //     const indexWidth = `resize_${columns}`;
-  //     const columnWidth = config[indexWidth];
-  // debugger;
-  // console.log("config----------------------------------------", config, columns);
-const colors = config.headerColor[0]
+}
 
   return (
     <>
-      <div
-        className={`
-        ${config.fixedHeight ? "fixedHeight" : ""}
-        ${config.unsetTable ? "unsetTable" : ""}
-         ${config.wrapText ? "wrapText" : ""}
-        `}
-        style={{ fontFamily: config.bodyStyle ? config.bodyStyle : "'Roboto'" }}
-      >
-        <table
-          {...getTableProps()}
-          className={`table ${
-            config.tableBordered
-              ? "bordered"
-              : config.unsetTable
-              ? "unsetTable"
-              : config.fixedHeight
-              ? "fixedHeight"
-              : ""
-          }`}
-        >
+       <div
+         className={`
+         ${config.fixedHeight ? "fixedHeight" : ""}
+         ${config.unsetTable ? "unsetTable" : ""}
+          ${config.wrapText ? "wrapText" : ""}
+         `}
+         style={{ fontFamily: config.bodyStyle ? config.bodyStyle : "'Roboto'" }}
+       >
+         <table
+           {...getTableProps()}
+           className={`table ${
+             config.tableBordered
+               ? "bordered"
+               : config.unsetTable
+               ? "unsetTable"
+               : config.fixedHeight
+               ? "fixedHeight"
+               : ""
+           }`}
+         >
           <thead>
             {newHeaderGroups.map((headerGroup, headerGroupIndex) => (
               <tr {...headerGroup.getHeaderGroupProps()} className="tr">
-                {headerGroup.headers.map((column, columnIndex) => (
-                  <th
-                    {...column.getHeaderProps(
-                      headerGroupIndex === 1 || headerGroup.length === 1
-                        ? column.getSortByToggleProps()
-                        : undefined
-                    )}
-                    className={`th ${column.headerClassName || ""} ${
-                      headerGroupIndex === 0 && headerGroups.length === 2 && columnIndex === 0
-                        ? "top-header"
-                        : ""
-                    } ${
-                      config.hideDimensionHeader && columnIndex === 0 ? "hide-dimension-header" : ""
-                    }`}
-                    style={{
-                      width: config[`resize_${columnIndex}`]
-                        ? `${config[`resize_${columnIndex}`]}`
-                        : "140px",
-                        background: colors ? colors : "#fff"
-                    }}
+              {headerGroup.headers.map((column, columnIndex) => (
+                <th
+
+                  {...column.getHeaderProps(
+                    headerGroupIndex === 1 || headerGroup.length === 1
+                      ? column.getSortByToggleProps()
+                      : undefined
+                  )}
+                  /* style={{
+                  width: config[`resize_${columnIndex}`] ? `${config[`resize_${columnIndex}`]}` : "140px",
+                  }} */
+                  className={`th ${column.headerClassName || ''} ${headerGroupIndex === 0 && headerGroups.length === 2 && columnIndex === 0 ? 'top-header' : ''} ${config.hideDimensionHeader && columnIndex === 0 ? 'hide-dimension-header' : ''}`}
                   >
-                    {column.render("Header")}
-                    {(headerGroupIndex === 1 || headerGroup.length === 1) && (
-                      <span>{column.isSorted ? "⇅" : " "}</span>
-                    )}
-                    <div
-                      {...column.getResizerProps()}
-                      className={`resizer ${column.isResizing ? "isResizing" : ""}`}
-                    />
-                  </th>
-                ))}
-              </tr>
+
+
+
+                  {column.render("Header")}
+                  {(headerGroupIndex === 1 || headerGroup.length === 1) && (
+                    <span>{column.isSorted ? "⇅" : " "}</span>
+                  )}
+                  <div
+                    {...column.getResizerProps()}
+                    className={`resizer ${column.isResizing ? "isResizing" : ""}`}
+                  />
+                </th>
+              ))}
+            </tr>
             ))}
           </thead>
           <tbody {...getTableBodyProps()}>
@@ -314,38 +300,38 @@ const colors = config.headerColor[0]
               prepareRow(row);
               return (
                 <tr {...row.getRowProps()} className="tr">
-                  {row.cells.map((cell, i) => {
-                    const cellProps = cell.getCellProps();
-                    const customProps = cell.column?.getCellProps
-                      ? cell.column?.getCellProps(cell)
-                      : null;
+                  {row.cells.map((cell,i) => {
 
-                    if (customProps) {
+                    const cellProps = cell.getCellProps();
+                    const customProps = cell.column?.getCellProps ? cell.column?.getCellProps(cell) : null;
+
+                    if (customProps ) {
                       const mergedStyles = { ...cellProps.style, ...customProps.style };
                       cellProps.style = mergedStyles;
                       return (
-                        <td
-                          {...cellProps}
-                          className="td"
-                          style={{
-                            width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : "140px",
-                          }}
+                        <td {...cellProps}
+                        className="td"
+                        /*style={{
+                          width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : "140px",
+                        }}*/
+
+
                         >
                           {cell.render("Cell")}
                         </td>
                       );
                     } else
-                      return (
-                        <td
-                          {...cellProps}
-                          className="td"
-                          style={{
-                            width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : "140px",
-                          }}
-                        >
-                          {cell.render("Cell")}
-                        </td>
-                      );
+                    return (
+                      <td {...cellProps}
+                      className="td"
+                      /*style={{
+                        width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : "140px",
+                      }}*/
+
+                      >
+                        {cell.render("Cell")}
+                      </td>
+                    );
                   })}
                 </tr>
               );
@@ -361,7 +347,6 @@ const keyHeaderMapFunction = (key, config, measureKeys) => {
   const configKey = `rename_${key}`;
   const headerName = config[configKey] || key;
 
-  // console.log(headerName)
 
   return {
     Header: headerName,
@@ -376,7 +361,7 @@ const keyHeaderMapFunction = (key, config, measureKeys) => {
         const isThisMeasureConditional = config[conditionalKey] === key;
         if (isThisMeasureConditional) {
           const conditionalValue = row[measureKey]?.value;
-          if (["Yes", "true", "1"].includes(conditionalValue)) {
+          if (['Yes', 'true', '1'].includes(conditionalValue)) {
             const conditionalHighlightStyle = parseCSSString(config.conditionalHighlightStyle);
             style = { ...style, ...conditionalHighlightStyle };
           }
@@ -387,19 +372,19 @@ const keyHeaderMapFunction = (key, config, measureKeys) => {
     Cell: ({ cell }) => {
       const row = cell.row.original;
       return row[key]?.html ? (
-        <span dangerouslySetInnerHTML={{ __html: row[key].html }} />
-      ) : (
-        row[key]?.rendered || row[key]?.value
-      );
+            <span dangerouslySetInnerHTML={{ __html: row[key].html }} />
+          ) : (
+            row[key]?.rendered || row[key]?.value
+          )
     },
   };
-};
+}
 
 // Function to parse CSS string into an object
 const parseCSSString = (cssString) => {
-  return cssString.split(";").reduce((acc, style) => {
+  return cssString.split(';').reduce((acc, style) => {
     if (style.trim()) {
-      const [key, value] = style.split(":");
+      const [key, value] = style.split(':');
       acc[key.trim()] = value.trim();
     }
     return acc;
@@ -407,37 +392,32 @@ const parseCSSString = (cssString) => {
 };
 
 export const CustomTable = ({ data, config, queryResponse, details, done }) => {
+
   const [firstData = {}] = data;
-  const dimensionKeys = queryResponse.fields.dimension_like
-    ? queryResponse.fields.dimension_like.map((dim) => dim.name)
-    : [];
-  const measureKeys = queryResponse.fields.measure_like
-    ? queryResponse.fields.measure_like.map((measure) => measure.name)
-    : [];
+  const dimensionKeys = queryResponse.fields.dimension_like ? queryResponse.fields.dimension_like.map((dim) => dim.name) : [];
+  const measureKeys = queryResponse.fields.measure_like ? queryResponse.fields.measure_like.map((measure) => measure.name) : [];
   const pivotKeys = queryResponse.pivots ? queryResponse.pivots.map((pivot) => pivot.key) : [];
   const validFieldKeys = [...dimensionKeys, ...measureKeys]
     // Filter out the keys that have are conditional configuration indicator booleans
     .filter((key) => {
       const conditionalKey = `conditional_styles_${key}`;
-      const isAConditionalKey =
-        config[conditionalKey] && config[conditionalKey] != "none" && config[conditionalKey] != "";
+      const isAConditionalKey = config[conditionalKey] && config[conditionalKey] != 'none' && config[conditionalKey] != ''
       return !isAConditionalKey;
-    });
+    })
 
-  const columns = useMemo(() => {
-    if (pivotKeys.length > 0) {
-      const dimensionHeaders = dimensionKeys.map((key) => {
-        return keyHeaderMapFunction(key, config, measureKeys);
-      });
-      if (config.groupByMeasure) {
-        const pivotColumnHeaders = measureKeys
-          .filter((measureKey) => {
+  const columns = useMemo(
+    () => {
+      if (pivotKeys.length > 0) {
+        const dimensionHeaders = dimensionKeys.map((key) => {
+          return keyHeaderMapFunction(key, config, measureKeys)
+        })
+        if (config.groupByMeasure) {
+          const pivotColumnHeaders = measureKeys.filter((measureKey) => {
             const conditionalKey = `conditional_styles_${measureKey}`;
             const conditionalColumn = config[conditionalKey];
-            const hasConditionalStyle = conditionalColumn && conditionalColumn !== "none";
+            const hasConditionalStyle = conditionalColumn && conditionalColumn !== 'none';
             return !hasConditionalStyle;
-          })
-          .map((measureKey) => {
+          }).map((measureKey) => {
             const measure = queryResponse.fields.measure_like.find(
               (measure) => measure.name === measureKey
             );
@@ -448,8 +428,8 @@ export const CustomTable = ({ data, config, queryResponse, details, done }) => {
               const pivotValue = pivotKeys.length > 1 ? pivotKey : "";
               const accessor = (d) => d[measureKey]?.[pivotValue]?.value;
               const pivotName = config[`rename_${pivotKey}`] || pivotKey;
-              const header = isTotal ? "Total" : `${pivotName}`;
-              const id = `${measureKey}_${pivotKey}`; // Ensure unique ID\
+              const header = isTotal ? 'Total' : `${pivotName}`;
+              const id = `${measureKey}_${pivotKey}`; // Ensure unique ID
 
               return {
                 Header: header,
@@ -459,8 +439,7 @@ export const CustomTable = ({ data, config, queryResponse, details, done }) => {
                 sortType: "basic",
                 getCellProps: (cellInfo) => {
                   const row = cellInfo.row.original;
-                  const cellValue =
-                    row[measureKey]?.[pivotValue]?.rendered ?? row[measureKey]?.[pivotValue]?.value;
+                  const cellValue = row[measureKey]?.[pivotValue]?.rendered ?? row[measureKey]?.[pivotValue]?.value;
                   let style = {};
                   measureKeys.forEach((otherMeasureKey) => {
                     if (otherMeasureKey === measureKey) return;
@@ -468,10 +447,8 @@ export const CustomTable = ({ data, config, queryResponse, details, done }) => {
                     const isThisMeasureConditional = config[conditionalKey] === measureKey;
                     if (isThisMeasureConditional) {
                       const conditionalValue = row[otherMeasureKey]?.[pivotValue]?.value;
-                      if (["Yes", "true", "1"].includes(conditionalValue)) {
-                        const conditionalHighlightStyle = parseCSSString(
-                          config.conditionalHighlightStyle
-                        );
+                      if (['Yes', 'true', '1'].includes(conditionalValue)) {
+                        const conditionalHighlightStyle = parseCSSString(config.conditionalHighlightStyle);
                         style = { ...style, ...conditionalHighlightStyle };
                       }
                     }
@@ -488,9 +465,7 @@ export const CustomTable = ({ data, config, queryResponse, details, done }) => {
                         __html: row[measureKey][pivotValue].html,
                       }}
                     />
-                  ) : (
-                    row[measureKey]?.[pivotValue]?.rendered ?? row[measureKey]?.[pivotValue]?.value
-                  );
+                  ) : (row[measureKey]?.[pivotValue]?.rendered ?? row[measureKey]?.[pivotValue]?.value);
                 },
               };
             });
@@ -504,17 +479,15 @@ export const CustomTable = ({ data, config, queryResponse, details, done }) => {
             };
           });
 
-        return [...dimensionHeaders, ...pivotColumnHeaders];
-      } else {
-        const pivotColumnHeaders = pivotKeys.map((pivotKey) => {
-          return measureKeys
-            .filter((measureKey) => {
+          return [...dimensionHeaders, ...pivotColumnHeaders];
+        } else {
+          const pivotColumnHeaders = pivotKeys.map((pivotKey) => {
+            return measureKeys.filter((measureKey) => {
               const conditionalKey = `conditional_styles_${measureKey}`;
               const conditionalColumn = config[conditionalKey];
-              const hasConditionalStyle = conditionalColumn && conditionalColumn !== "none";
+              const hasConditionalStyle = conditionalColumn && conditionalColumn !== 'none';
               return !hasConditionalStyle;
-            })
-            .map((measureKey) => {
+            }).map((measureKey) => {
               const measure = queryResponse.fields.measure_like.find(
                 (measure) => measure.name === measureKey
               );
@@ -534,8 +507,7 @@ export const CustomTable = ({ data, config, queryResponse, details, done }) => {
                 sortType: "basic",
                 getCellProps: (cellInfo) => {
                   const row = cellInfo.row.original;
-                  const cellValue =
-                    row[measureKey]?.[pivotValue]?.rendered ?? row[measureKey]?.[pivotValue]?.value;
+                  const cellValue = row[measureKey]?.[pivotValue]?.rendered ?? row[measureKey]?.[pivotValue]?.value;
                   let style = {};
                   measureKeys.forEach((otherMeasureKey) => {
                     if (otherMeasureKey === measureKey) return;
@@ -543,10 +515,8 @@ export const CustomTable = ({ data, config, queryResponse, details, done }) => {
                     const isThisMeasureConditional = config[conditionalKey] === measureKey;
                     if (isThisMeasureConditional) {
                       const conditionalValue = row[otherMeasureKey]?.[pivotValue]?.value;
-                      if (["Yes", "true", "1"].includes(conditionalValue)) {
-                        const conditionalHighlightStyle = parseCSSString(
-                          config.conditionalHighlightStyle
-                        );
+                      if (['Yes', 'true', '1'].includes(conditionalValue)) {
+                        const conditionalHighlightStyle = parseCSSString(config.conditionalHighlightStyle);
                         style = { ...style, ...conditionalHighlightStyle };
                       }
                     }
@@ -561,25 +531,34 @@ export const CustomTable = ({ data, config, queryResponse, details, done }) => {
                         __html: row[measureKey][pivotValue].html,
                       }}
                     />
-                  ) : (
-                    row[measureKey]?.[pivotValue]?.rendered ?? row[measureKey]?.[pivotValue]?.value
-                  );
+                  ) : (row[measureKey]?.[pivotValue]?.rendered ?? row[measureKey]?.[pivotValue]?.value);
                 },
               };
             });
-        });
-        return [...dimensionHeaders, ...pivotColumnHeaders.flat()];
+          });
+          return [...dimensionHeaders, ...pivotColumnHeaders.flat()];
+        }
+      } else {
+        return validFieldKeys.map((key) => {
+          return keyHeaderMapFunction(key, config, measureKeys)
+        })
       }
-    } else {
-      return validFieldKeys.map((key) => {
-        return keyHeaderMapFunction(key, config, measureKeys);
-      });
-    }
-  }, [firstData, config]);
+    },
+    [firstData, config]
+  );
 
   return (
     <Styles config={config} rowCount={data.length}>
-      <Table config={config} columns={columns} data={data} />
+
+      <Table
+        config={config}
+        columns={columns}
+        data={data}
+
+      />
+
+
     </Styles>
   );
-};
+
+}
