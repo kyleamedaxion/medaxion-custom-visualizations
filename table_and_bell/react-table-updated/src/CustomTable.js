@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useTable, useFlexLayout, useResizeColumns, useSortBy } from "react-table";
 
 import "bootstrap/dist/css/bootstrap.min.css";
+import { string } from "prop-types";
 
 
 // Function to generate CSS for column borders
@@ -162,13 +163,17 @@ const Styles = ({ children, config, rowCount }) => {
       ${(props) => props.rowStyles}
       vertical-align: middle;
     }
-
-
-
     thead th{
     background: ${config.headerColor ? config.headerColor : "#fff"}
     }
 
+    tbody tr td, thead tr th {
+      max-width: 400px;
+    }
+
+    table {
+      width: auto !important;
+    }
 
     ${(props) => props.columnBordersCSS}
     ${(props) => props.rowBordersCSS}
@@ -195,9 +200,9 @@ const Styles = ({ children, config, rowCount }) => {
 function Table({ columns, data, config }) {
   const defaultColumn = React.useMemo(
     () => ({
-      minWidth: 140,
-      width: 140,
+      minWidth: 50,
       maxWidth: 400,
+      width: 50,
     }),
     []
   );
@@ -215,10 +220,11 @@ function Table({ columns, data, config }) {
       useFlexLayout,
       useResizeColumns
     );
-
         // Destructure and copy the headerGroups
         const [firstHeaderGroup, ...restHeaderGroups] = headerGroups;
         let newHeaderGroups = headerGroups;
+        console.log(newHeaderGroups)
+        // debugger
         // Check config to determine if the first header should be hidden
         if (config.hideTopHeaderRow) {
          newHeaderGroups = restHeaderGroups;
@@ -264,19 +270,38 @@ function Table({ columns, data, config }) {
            }`}
          >
           <thead>
-            {newHeaderGroups.map((headerGroup, headerGroupIndex) => (
+            {newHeaderGroups.map((headerGroup, headerGroupIndex) => {
+              let count = 0
+              return(
               <tr {...headerGroup.getHeaderGroupProps()} className="tr">
-              {headerGroup.headers.map((column, columnIndex) => (
+              {headerGroup.headers.map((column, columnIndex) => {
+                const content_th = {...column.getHeaderProps(
+                  headerGroupIndex === 1 || headerGroup.length === 1
+                    ? column.getSortByToggleProps()
+                    : undefined,
+                )}
+                let width = 0
+                if(column.headers !== undefined && content_th.colSpan) {
+                  width = 0
+                  for(let i = 0; i< content_th.colSpan; i ++) {
+                    if(config[`resize_${count + i}`] !== undefined) {
+                      let resize = parseInt(config[`resize_${count + i}`])
+                      if(resize < 50) width += 50
+                      else if(resize <= 400) width += resize
+                      else width += 400
+                    }
+                  }
+                  width += 'px'
+                  count += content_th.colSpan
+                  content_th.style = {...content_th.style, width: width, maxWidth: width}
+                }
+                else {
+                  width = config[`resize_${columnIndex}`] ? `${config[`resize_${columnIndex}`]}` : "50px"
+                  content_th.style = {...content_th.style, width: width}
+                }
+                return(
                 <th
-
-                  {...column.getHeaderProps(
-                    headerGroupIndex === 1 || headerGroup.length === 1
-                      ? column.getSortByToggleProps()
-                      : undefined
-                  )}
-                  /* style={{
-                  width: config[`resize_${columnIndex}`] ? `${config[`resize_${columnIndex}`]}` : "140px",
-                  }} */
+                  {...content_th}
                   className={`th ${column.headerClassName || ''} ${headerGroupIndex === 0 && headerGroups.length === 2 && columnIndex === 0 ? 'top-header' : ''} ${config.hideDimensionHeader && columnIndex === 0 ? 'hide-dimension-header' : ''}`}
                   >
 
@@ -291,9 +316,10 @@ function Table({ columns, data, config }) {
                     className={`resizer ${column.isResizing ? "isResizing" : ""}`}
                   />
                 </th>
-              ))}
+                )
+              })}
             </tr>
-            ))}
+            )})}
           </thead>
           <tbody {...getTableBodyProps()}>
             {rows.map((row, i) => {
@@ -306,32 +332,29 @@ function Table({ columns, data, config }) {
                     const customProps = cell.column?.getCellProps ? cell.column?.getCellProps(cell) : null;
 
                     if (customProps ) {
-                      const mergedStyles = { ...cellProps.style, ...customProps.style };
+                      const mergedStyles = {
+                        ...cellProps.style,
+                        ...customProps.style,
+                        width : config[`resize_${i}`] ? config[`resize_${i}`] : "50px"
+                      };
                       cellProps.style = mergedStyles;
                       return (
                         <td {...cellProps}
                         className="td"
-                        /*style={{
-                          width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : "140px",
-                        }}*/
-
-
                         >
                           {cell.render("Cell")}
                         </td>
                       );
-                    } else
-                    return (
-                      <td {...cellProps}
-                      className="td"
-                      /*style={{
-                        width: config[`resize_${i}`] ? `${config[`resize_${i}`]}` : "140px",
-                      }}*/
-
-                      >
-                        {cell.render("Cell")}
-                      </td>
-                    );
+                    } else {
+                      cellProps.style = {...cellProps.style, width : config[`resize_${i}`] ? config[`resize_${i}`] : "50px" }
+                      return (
+                        <td {...cellProps}
+                        className="td"
+                        >
+                          {cell.render("Cell")}
+                        </td>
+                      );
+                    }
                   })}
                 </tr>
               );

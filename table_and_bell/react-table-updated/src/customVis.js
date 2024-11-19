@@ -229,8 +229,8 @@ looker.plugins.visualizations.add({
      if (!options[indexWidth] && index < 1) {
          options[indexWidth] = {
            label: `Column width for:   ${field}`,
-           default: "140px",
-           placeholder: "140px",
+           default: "50px",
+           placeholder: "50px",
            section: "Table",
            type: "string",
            display: "text",
@@ -250,8 +250,8 @@ looker.plugins.visualizations.add({
      if (!options[indexWidth]) {
          options[indexWidth] = {
            label: `Column width for:   ${field}`,
-           default: "140px",
-           placeholder: "140px",
+           default: "50px",
+           placeholder: "50px",
            section: "Table",
            type: "string",
            display: "text",
@@ -319,8 +319,8 @@ looker.plugins.visualizations.add({
          if (!options[pivotWidth]) {
            options[pivotWidth] = {
              label: `Column width for:  ${pivot.key}`,
-             default: "140px",
-             placeholder: "140px",
+             default: "50px",
+             placeholder: "50px",
              section: "Table",
              type: "string",
              display: "text",
