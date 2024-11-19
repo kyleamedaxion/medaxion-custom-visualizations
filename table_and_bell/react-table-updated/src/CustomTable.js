@@ -284,12 +284,13 @@ function Table({ columns, data, config }) {
                 if(column.headers !== undefined && content_th.colSpan) {
                   width = 0
                   for(let i = 0; i< content_th.colSpan; i ++) {
-                    if(config[`resize_${count + i}`] !== undefined) {
+                    if(config[`resize_${count + i}`] !== undefined && config[`resize_${count + i}`] !== "") {
                       let resize = parseInt(config[`resize_${count + i}`])
                       if(resize < 50) width += 50
                       else if(resize <= 400) width += resize
                       else width += 400
                     }
+                    else width += 50
                   }
                   width += 'px'
                   count += content_th.colSpan
