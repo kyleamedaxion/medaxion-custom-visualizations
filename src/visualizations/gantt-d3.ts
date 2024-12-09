@@ -167,7 +167,7 @@ export const vis: GanttViz = {
     const additionalWidth = `${config.rotateY ? 5 : 25 }`
     console.log(additionalWidth, "additionalWidth")
     // Set up SVG container
-    const margin = { top: titleHeight + 6, right: 12, bottom: 60, left: labelWidth + 25}; // Add some padding to the label width
+    const margin = { top: titleHeight + 6, right: 20, bottom: 60, left: labelWidth + 25}; // Add some padding to the label width
     // const margin = { top: 34, right: 10, bottom: 38, left: labelWidth + 10 }; // Add some padding to the label width
     const width = element.clientWidth - margin.left - margin.right;
     const height = element.clientHeight - margin.top - margin.bottom + 15;
@@ -245,10 +245,20 @@ export const vis: GanttViz = {
       .attr("stroke-width", 1);
 
     // Set up scales
+    const minDate = d3.min(data, d => d[startDim].value ? new Date(d[startDim].value) : null);
+    let maxDate = d3.max(data, d => d[endDim].value ? new Date(d[endDim].value) : null);
+    // shift the max date if the value refBands.refBand2End is larger than the max date
+    if (!maxDate || new Date(refBands.refBand2End) > maxDate) {
+      maxDate = new Date(refBands.refBand2End);
+    }
+
+    // Extend the maximum date by 30 minutes
+    const extendedMaxDate = maxDate ? new Date(maxDate) : new Date();
+    extendedMaxDate.setMinutes(extendedMaxDate.getMinutes() + 30);
     const x = d3.scaleTime()
       .domain([
-        d3.min(data, d => d[startDim].value ? new Date(d[startDim].value) : null),
-        d3.max(data, d => d[endDim].value ? new Date(d[endDim].value) : null)
+        minDate,
+        extendedMaxDate
       ].filter(d => d !== null) as Date[])
       .range([0, width])
       ;
@@ -260,7 +270,9 @@ export const vis: GanttViz = {
 
     // Define custom time format for military time without leading zeros
     const customTimeFormat = d3.timeFormat("%-I:%M %p");
-
+    const xAxisFontSize = config.axesFontSize ? parseInt(config.axesFontSize, 10) : 10;
+    const xAxisPadding = xAxisFontSize * 0.3; // Adjust the multiplier as needed for desired padding
+    
     // Add axes
     svg.append("g")
     .attr("class", "x axis")
@@ -271,7 +283,9 @@ export const vis: GanttViz = {
     .style("font-weight", "100")
     .style('font-family', `${config.bodyStyle || "'Noto Sans'"}`)
     .style("font-size", config.axesFontSize ? config.axesFontSize : "10px")
-    .style("stroke", config.xAxisLineColor || 'lightgray');
+    .style("stroke", config.xAxisLineColor || 'lightgray')
+    .attr("y", xAxisPadding); // Apply the calculated padding
+  ;
 
 
     svg.selectAll(".x.axis path")
