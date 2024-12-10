@@ -5,7 +5,7 @@ const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 module.exports = {
   mode: "development",
   entry: {
-    // table: "./src/customVis.js",
+    table: "./src/customVis.js",
     bell: "./src/bell.js",
   },
   devServer: {

@@ -31,6 +31,7 @@
   "dependencies": {
     "bootstrap": "^5.3.0",
     "d3": "^7.9.0",
+    "highcharts-more": "^0.1.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-table": "7.8.0",

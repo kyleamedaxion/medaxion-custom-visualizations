@@ -1,8 +1,9 @@
 // To allow invalid https certificates from localhost in Chrome: chrome://flags/#allow-insecure-localhost
 
 import * as React from "react";
-import * as ReactDOMClient from 'react-dom/client';
-console.log(ReactDOMClient);
+//import * as ReactDOMClient from 'react-dom/client';
+//console.log(ReactDOMClient);
+import * as ReactDOM from "react-dom"
 import { CustomTable } from "./CustomTable";
 
 looker.plugins.visualizations.add({
@@ -127,15 +128,16 @@ looker.plugins.visualizations.add({
         this.trigger("registerOptions", options);
 
 
-    const root = createRoot(element);
-    root.render(
+    //const root = React.createRoot(element);
+    //root.render(
+      ReactDOM.render(
       <CustomTable
         data={data}
         config={config}
         queryResponse={queryResponse}
         details={details}
         done={done}
-      />
+      />, element
     );
     done();
   },
